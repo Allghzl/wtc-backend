@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('auto_score')->nullable();
             $table->integer('manual_score')->nullable();
             $table->text('feedback')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }
