@@ -14,7 +14,8 @@ class ModuleStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        return $user && $user->role === 'admin';
     }
 
     /**
