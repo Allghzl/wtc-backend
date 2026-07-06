@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChallengeController;
+use App\Http\Controllers\Api\LessonController;
+use App\Http\Controllers\Api\ModuleController;
+use App\Http\Controllers\Api\StudyClassController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\TrackController;
-use App\Http\Controllers\Api\LessonController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,7 +20,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::apiResource('tracks', TrackController::class);
+    Route::apiResource('modules', ModuleController::class);
+    Route::apiResource('lessons', LessonController::class);
     Route::apiResource('challenges', ChallengeController::class);
     Route::post('/challenges/{challenge}/submit', [SubmissionController::class, 'store']);
-    Route::apiResource('lessons', LessonController::class);
+    Route::apiResource('study-classes', StudyClassController::class);
 });

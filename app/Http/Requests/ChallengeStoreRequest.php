@@ -29,7 +29,7 @@ class ChallengeStoreRequest extends FormRequest
             'module_id' => ['required', 'exists:modules,id'],
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:challenges,slug'],
-            'type' => ['required', 'string', 'in:multiple_choice,fill_blank,mini_coding,assignment,simulation'],
+            'type' => ['required', 'string', 'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group'],
             'content' => ['required', 'string'],
             'metadata' => ['nullable', 'array'],
             'max_score' => ['required', 'integer', 'min:1', 'max:100']

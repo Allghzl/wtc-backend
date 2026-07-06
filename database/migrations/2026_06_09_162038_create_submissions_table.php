@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('challenge_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('status');
-            $table->jsonb('submitted_content');
+            $table->json('submitted_content')->nullable();
             $table->string('file_path')->nullable();
             $table->integer('auto_score')->nullable();
             $table->integer('manual_score')->nullable();

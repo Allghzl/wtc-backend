@@ -30,7 +30,7 @@ class ChallengeUpdateRequest extends FormRequest
             'module_id' => ['required', 'exists:modules,id'],
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('challenges')->ignore($this->route('challenge'))],
-            'type' => ['required', 'string', 'in:quiz,assignment'],
+            'type' => ['required', 'string', 'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group'],
             'content' => ['required', 'string'],
             'metadata' => ['nullable', 'array'],
             'max_score' => ['required', 'integer', 'min:0']

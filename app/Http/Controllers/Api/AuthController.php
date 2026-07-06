@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
@@ -31,6 +32,8 @@ class AuthController extends Controller
             'role' => $data['role'],
         ]);
 
+        UserRegistered::dispatch($user);
+
         return $this->success(
             new UserResource($user),
             'User registered successfully.',
@@ -41,7 +44,6 @@ class AuthController extends Controller
     public function login(UserLoginRequest $request)
     {
         $data = $request->validated();
-
         $user = User::where('email', $data['email'])->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
@@ -52,7 +54,7 @@ class AuthController extends Controller
 
         return $this->success([
             'user' => new UserResource($user),
-            'token' => $token
+            'token' => $token,
         ], 'Login successful.');
     }
 
