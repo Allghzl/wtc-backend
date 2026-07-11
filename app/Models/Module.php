@@ -16,6 +16,11 @@ class Module extends Model
         'track_id'
     ];
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
     public function track()
     {
         return $this->belongsTo(Track::class);
