@@ -18,6 +18,11 @@ class Track extends Model
         'image_url'
     ];
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
     public function modules()
     {
         return $this->hasMany(Module::class);
