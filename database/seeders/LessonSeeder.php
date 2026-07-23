@@ -104,7 +104,7 @@ class LessonSeeder extends Seeder
                 'title' => 'Basic Routing',
                 'slug' => 'basic-routing',
                 'description' => 'Routing dasar di Laravel',
-                'content' => 'Route mendefinisikan URL dan response. Contoh: Route::get(' / ', function() { return view("welcome"); });',
+                'content' => 'Route mendefinisikan URL dan response. Contoh: Route::get(\'/\', function() { return view(\'welcome\'); });',
                 'video_url' => null,
                 'duration' => 20,
                 'order' => 1,
