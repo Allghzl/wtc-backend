@@ -13,8 +13,8 @@ class UserSeeder extends Seeder
         // Admin
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@wtc',
-            'password' => Hash::make('webtech4'),
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
             'role' => 'admin',
             'study_class_id' => null,
             'email_verified_at' => now(),
@@ -22,8 +22,8 @@ class UserSeeder extends Seeder
 
         // Teachers
         $teachers = [
-            ['name' => 'Fikri Santoso', 'email' => 'aziz.teacher@example.com'],
-            ['name' => 'Dafa Rachman', 'email' => 'abdul.teacher@example.com'],
+            ['name' => 'Budi Santoso', 'email' => 'budi.teacher@example.com'],
+            ['name' => 'Siti Nurhaliza', 'email' => 'siti.teacher@example.com'],
         ];
 
         foreach ($teachers as $teacher) {
@@ -49,7 +49,6 @@ class UserSeeder extends Seeder
             ['name' => 'Hani Oktavia', 'email' => 'hani@example.com', 'class' => 3],
             ['name' => 'Irfan Hakim', 'email' => 'irfan@example.com', 'class' => 4],
             ['name' => 'Jasmine Putri', 'email' => 'jasmine@example.com', 'class' => 4],
-            ['name' => 'Rohman', 'email' => 'Rohman@example.com', 'class' => 4],
         ];
 
         foreach ($students as $student) {
