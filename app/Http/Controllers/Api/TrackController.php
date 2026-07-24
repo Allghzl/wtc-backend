@@ -18,7 +18,7 @@ class TrackController extends Controller
      */
     public function index()
     {
-        $tracks = Track::orderBy('order')->get();
+        $tracks = Track::withCount(['modules'])->orderBy('order')->get();
 
         if ($tracks->isEmpty()) {
             return $this->error('No tracks found', 404);
