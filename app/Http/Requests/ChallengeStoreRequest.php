@@ -18,6 +18,13 @@ class ChallengeStoreRequest extends FormRequest
         return $user && $user->role === 'admin';
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'metadata' => $this->input('metadata') ?? [],
+        ]);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
