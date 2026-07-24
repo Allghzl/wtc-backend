@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('challenges', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('module_id')->constrained()->onDelete('cascade');
+            $table->foreignId('module_id')->nullable()->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('slug')->unique();
             $table->string('type');

@@ -20,4 +20,8 @@ class Lesson extends Model
     {
         return $this->belongsTo(Module::class);
     }
+    public function challenges()
+    {
+        return $this->hasMany(Challenge::class);
+    }
 }

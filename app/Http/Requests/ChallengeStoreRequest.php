@@ -26,13 +26,24 @@ class ChallengeStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'module_id' => ['required', 'exists:modules,id'],
+            'module_id' => ['nullable', 'required_without:lesson_id', 'prohibits:lesson_id', 'exists:modules,id'],
+            'lesson_id' => ['nullable', 'required_without:module_id', 'prohibits:module_id', 'exists:lessons,id'],
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:challenges,slug'],
             'type' => ['required', 'string', 'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group'],
             'content' => ['required', 'string'],
             'metadata' => ['nullable', 'array'],
             'max_score' => ['required', 'integer', 'min:1', 'max:100']
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'module_id.required_without' => 'Pilih salah satu: Challenge harus terikat ke Module atau Lesson.',
+            'module_id.prohibits'        => 'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
+            'lesson_id.required_without' => 'Pilih salah satu: Challenge harus terikat ke Module atau Lesson.',
+            'lesson_id.prohibits'        => 'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
         ];
     }
 }

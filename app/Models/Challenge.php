@@ -8,6 +8,7 @@ class Challenge extends Model
 {
     protected $fillable = [
         'module_id',
+        'lesson_id',
         'title',
         'slug',
         'type',
@@ -26,6 +27,11 @@ class Challenge extends Model
     public function module()
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function lesson()
+    {
+        return $this->belongsTo(Lesson::class);
     }
 
     public function submissions()
