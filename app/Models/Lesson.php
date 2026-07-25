@@ -17,6 +17,12 @@ class Lesson extends Model
         'module_id'
     ];
 
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
+
+
     public function module()
     {
         return $this->belongsTo(Module::class);
