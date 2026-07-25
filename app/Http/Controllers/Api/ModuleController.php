@@ -7,6 +7,7 @@ use App\Http\Requests\ModuleStoreRequest;
 use App\Http\Requests\ModuleUpdateRequest;
 use App\Http\Resources\ModuleResource;
 use App\Models\Module;
+use App\Models\Track;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,23 @@ class ModuleController extends Controller
         return $this->success(
             ModuleResource::collection($modules),
             'retrieved successfully'
+        );
+    }
+
+    /**
+     * Get modules by track
+     */
+    public function getByTrack(Track $track)
+    {
+        $modules = $track->modules()->orderBy('order')->get();
+
+        if ($modules->isEmpty()) {
+            return $this->error('No modules found in this track', 404);
+        }
+
+        return $this->success(
+            ModuleResource::collection($modules),
+            'Modules retrieved successfully'
         );
     }
 

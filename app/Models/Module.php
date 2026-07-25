@@ -29,4 +29,8 @@ class Module extends Model
     {
         return $this->hasMany(Lesson::class);
     }
+    public function challenges()
+    {
+        return $this->hasMany(Challenge::class);
+    }
 }

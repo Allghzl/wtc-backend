@@ -7,6 +7,7 @@ use App\Http\Requests\ChallengeStoreRequest;
 use App\Http\Requests\ChallengeUpdateRequest;
 use App\Http\Resources\ChallengeResource;
 use App\Models\Challenge;
+use App\Models\Module;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -25,6 +26,23 @@ class ChallengeController extends Controller
         }
 
         return $this->success(ChallengeResource::collection($challenges), 'Challenges data collected successfully');
+    }
+
+    /**
+     * Get lessons by track
+     */
+    public function getByModule(Module $module)
+    {
+        $challenges = $module->challenges()->orderBy('order')->get();
+
+        if ($challenges->isEmpty()) {
+            return $this->error('No challenges found in this track', 404);
+        }
+
+        return $this->success(
+            ChallengeResource::collection($challenges),
+            'Challenges retrieved successfully'
+        );
     }
 
     /**

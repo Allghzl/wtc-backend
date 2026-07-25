@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LessonStoreRequest;
 use App\Http\Requests\LessonUpdateRequest;
+use App\Http\Resources\LessonResource;
 use App\Models\Lesson;
+use App\Models\Module;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
@@ -26,6 +28,23 @@ class LessonController extends Controller
         return $this->success(
             $lessons,
             'retrieved successfully'
+        );
+    }
+
+    /**
+     * Get lessons by track
+     */
+    public function getByModule(Module $module)
+    {
+        $lessons = $module->lessons()->orderBy('order')->get();
+
+        if ($lessons->isEmpty()) {
+            return $this->error('No lessons found in this track', 404);
+        }
+
+        return $this->success(
+            $lessons,
+            'Lessons retrieved successfully'
         );
     }
 
