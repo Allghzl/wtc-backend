@@ -32,7 +32,7 @@ class LessonController extends Controller
     }
 
     /**
-     * Get lessons by track
+     * Get lessons by module
      */
     public function getByModule(Module $module)
     {

@@ -29,7 +29,7 @@ class ChallengeController extends Controller
     }
 
     /**
-     * Get lessons by track
+     * Get challenges by module
      */
     public function getByModule(Module $module)
     {
