@@ -29,6 +29,7 @@ class LessonStoreRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
+            'slug' => ['required', 'string'],
             'video_url' => ['nullable', 'url'],
             'order' => [
                 'required',
