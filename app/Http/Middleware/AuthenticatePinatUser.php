@@ -14,22 +14,32 @@ class AuthenticatePinatUser
         protected PinatJwtService $jwt,
         protected ProfileService $profiles,
     ) {}
+
     /**
      * Handle an incoming request.
      *
-     * @param  Closure(Request): (Response)  $next
+     * @param Closure(Request): Response $next
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Allow CORS preflight request
+        if ($request->isMethod('OPTIONS')) {
+            return $next($request);
+        }
 
         $token = $this->extractBearerToken($request);
+
         $payload = $this->jwt->verify($token);
+
         $profile = $this->profiles->syncFromJwt($payload);
+
         $request->setUserResolver(fn() => $profile);
+
         $request->attributes->set('profile', $profile);
 
         return $next($request);
     }
+
     private function extractBearerToken(Request $request): string
     {
         $token = $request->bearerToken();
