@@ -12,11 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('challenges', function (Blueprint $table) {
-            $table->text('description')->nullable()->after('title');
-            $table->text('instructions')->nullable()->after('content');
-            $table->enum('difficulty', ['easy', 'medium', 'hard'])->nullable()->after('instructions');
+            $table->enum('difficulty', ['easy', 'medium', 'hard'])->nullable()->after('type');
             $table->integer('order')->default(0)->after('difficulty');
-            $table->integer('points')->default(0)->after('max_score')->comment('Points for gamification');
+            $table->integer('points')->default(0)->after('max_score')->comment('Points for user exp/leaderboarding');
         });
     }
 
@@ -26,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('challenges', function (Blueprint $table) {
-            $table->dropColumn(['description', 'instructions', 'difficulty', 'order', 'points']);
+            $table->dropColumn(['difficulty', 'order', 'points']);
         });
     }
 };

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('submissions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('challenge_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('profile_puid')->constrained('profiles', 'puid')->onDelete('cascade');
             $table->string('status');
             $table->json('submitted_content')->nullable();
             $table->string('file_path')->nullable();

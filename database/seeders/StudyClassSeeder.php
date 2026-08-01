@@ -2,25 +2,29 @@
 
 namespace Database\Seeders;
 
-use App\Models\StudyClass;
 use Illuminate\Database\Seeder;
+use App\Models\StudyClass;
 
 class StudyClassSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
         $classes = [
-            ['name' => 'XII RPL 1'],
-            ['name' => 'XII RPL 2'],
-            ['name' => 'XII RPL 3'],
-            ['name' => 'XI RPL 1'],
-            ['name' => 'XI RPL 2'],
-            ['name' => 'X RPL 1'],
-            ['name' => 'X RPL 2'],
+            'Class A - Morning',
+            'Class B - Afternoon',
+            'Class C - Evening',
+            'Class D - Weekend',
+            'Advanced Track',
+            'Beginner Track',
         ];
 
-        foreach ($classes as $class) {
-            StudyClass::create($class);
+        foreach ($classes as $className) {
+            StudyClass::create(['name' => $className]);
         }
+
+        $this->command->info('✅ Study classes seeded: ' . count($classes));
     }
 }

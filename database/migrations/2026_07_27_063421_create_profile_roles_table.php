@@ -11,16 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('modules', function (Blueprint $table) {
+        Schema::create('profile_roles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('track_id')->constrained()->onDelete('cascade');
-            $table->string('title');
-            $table->string('slug')->unique();
-            $table->integer('order');
-            $table->softDeletes();
+            $table->foreignUuid('profile_puid')->constrained('profiles', 'puid')->cascadeOnDelete();
+            $table->foreignId('role_id')->constrained();
             $table->timestamps();
-
-            $table->unique(['track_id', 'order']);
         });
     }
 
@@ -29,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('modules');
+        Schema::dropIfExists('profile_roles');
     }
 };

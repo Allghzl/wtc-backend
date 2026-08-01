@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\StudyClassController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\TrackController;
+use App\Services\PinatJwtService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,11 +15,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+// Route::post('/login', [AuthController::class, 'login']);
+// Route::post('/register', [AuthController::class, 'register']);
+// Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
-Route::group(['middleware' => 'auth:sanctum'], function () {
+Route::group(['middleware' => 'pinat.auth'], function () {
     Route::get('/tracks/{track}/modules', [ModuleController::class, 'getByTrack']);
     Route::get('/modules/{module}/lessons', [LessonController::class, 'getByModule']);
     Route::get('/modules/{module}/challenges', [ChallengeController::class, 'getByModule']);
@@ -29,4 +30,21 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::apiResource('challenges', ChallengeController::class);
     Route::post('/challenges/{challenge}/submit', [SubmissionController::class, 'store']);
     Route::apiResource('study-classes', StudyClassController::class);
+
+    Route::get('/me', function (Request $request) {
+        return response()->json($request->user());
+    });
+});
+
+
+Route::get('/debug/token', function (
+    Request $request,
+    PinatJwtService $jwt
+) {
+    $token = $jwt->getBearerToken($request);
+
+    return [
+        'kid' => $jwt->getKid($token),
+        'header' => $jwt->getHeader($token),
+    ];
 });

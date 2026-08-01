@@ -15,10 +15,12 @@ return new class extends Migration {
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->integer('order')->unique();
+            $table->integer('order');
             $table->string('image_url')->nullable();
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('order');
         });
     }
 

@@ -11,16 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('modules', function (Blueprint $table) {
+        Schema::create('profile_achievements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('track_id')->constrained()->onDelete('cascade');
-            $table->string('title');
-            $table->string('slug')->unique();
-            $table->integer('order');
-            $table->softDeletes();
+            $table->foreignUuid('profile_puid')->constrained('profiles', 'puid')->cascadeOnDelete();
+            $table->foreignId('achievement_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['track_id', 'order']);
+            $table->unique(['profile_puid', 'achievement_id']);
         });
     }
 
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('modules');
+        Schema::dropIfExists('profile_achievements');
     }
 };
