@@ -4,8 +4,6 @@ namespace App\Providers;
 
 use App\Events\ScorePublished;
 use App\Events\SubmissionCreated;
-use App\Events\UserRegistered;
-use App\Listeners\AssignDefaultTrack;
 use App\Listeners\CalculateScore;
 use App\Listeners\SendNotification;
 use Dedoc\Scramble\Scramble;
@@ -23,7 +21,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Event::listen(UserRegistered::class, AssignDefaultTrack::class);
         Event::listen(SubmissionCreated::class, CalculateScore::class);
         Event::listen(ScorePublished::class, SendNotification::class);
 

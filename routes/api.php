@@ -15,11 +15,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/register', [AuthController::class, 'register']);
-// Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
-Route::group(['middleware' => 'pinat.auth'], function () {
+Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/tracks/{track}/modules', [ModuleController::class, 'getByTrack']);
     Route::get('/modules/{module}/lessons', [LessonController::class, 'getByModule']);
     Route::get('/modules/{module}/challenges', [ChallengeController::class, 'getByModule']);

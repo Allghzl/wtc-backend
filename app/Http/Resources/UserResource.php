@@ -16,10 +16,12 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'study_class_id' => $this->study_class_id,
+            'puid' => $this->puid,
             'name' => $this->name,
             'email' => $this->email,
-            'role' => $this->role,
+            'provider' => $this->provider,
+            'avatar' => $this->avatar,
+            'email_verified_at' => $this->email_verified_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

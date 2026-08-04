@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('student_progress', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignUuid('profile_puid')
-                ->constrained('profiles', 'puid')
+            $table->foreignUuid('profile_id')
+                ->constrained('profiles')
                 ->cascadeOnDelete();
 
             $table->foreignId('track_id')->nullable()->constrained()->nullOnDelete();
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(
-                ['profile_puid', 'track_id', 'module_id', 'lesson_id'],
+                ['profile_id', 'track_id', 'module_id', 'lesson_id'],
                 'student_progress_unique_scope'
             );
         });
@@ -33,9 +33,9 @@ return new class extends Migration
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignUuid('profile_puid')
+            $table->foreignUuid('profile_id')
                 ->nullable()
-                ->constrained('profiles', 'puid')
+                ->constrained('profiles')
                 ->nullOnDelete();
 
             $table->string('event');
@@ -52,8 +52,8 @@ return new class extends Migration
         Schema::create('challenge_attempts', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignUuid('profile_puid')
-                ->constrained('profiles', 'puid')
+            $table->foreignUuid('profile_id')
+                ->constrained('profiles')
                 ->cascadeOnDelete();
 
             $table->foreignId('challenge_id')->constrained()->cascadeOnDelete();
@@ -66,7 +66,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(
-                ['profile_puid', 'challenge_id', 'attempt_number'],
+                ['profile_id', 'challenge_id', 'attempt_number'],
                 'challenge_attempts_unique_number'
             );
         });
@@ -99,8 +99,8 @@ return new class extends Migration
 
             $table->foreignId('notification_id')->constrained()->cascadeOnDelete();
 
-            $table->foreignUuid('profile_puid')
-                ->constrained('profiles', 'puid')
+            $table->foreignUuid('profile_id')
+                ->constrained('profiles')
                 ->cascadeOnDelete();
 
             $table->string('channel')->default('in_app');
@@ -109,7 +109,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(
-                ['notification_id', 'profile_puid', 'channel'],
+                ['notification_id', 'profile_id', 'channel'],
                 'notification_receivers_unique_channel'
             );
         });
@@ -117,9 +117,9 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignUuid('profile_puid')
+            $table->foreignUuid('profile_id')
                 ->nullable()
-                ->constrained('profiles', 'puid')
+                ->constrained('profiles')
                 ->nullOnDelete();
 
             $table->string('action');

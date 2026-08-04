@@ -25,11 +25,9 @@ class UserRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'study_class_id' => ['nullable', 'exists:study_classes,id'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', 'string', 'in:Student,Teacher,Admin'],
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Profile;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Console\Command;
 
 class AssignRoleCommand extends Command
@@ -21,10 +22,10 @@ class AssignRoleCommand extends Command
     {
         $identifier = $this->argument('identifier');
 
-        $profile = Profile::query()
+        $user = User::query()
             ->Where('email', $identifier)
             ->first();
-
+        $profile = $user->profile;
         if (! $profile) {
             $this->error("Profile '{$identifier}' tidak ditemukan.");
             return self::FAILURE;
@@ -44,7 +45,7 @@ class AssignRoleCommand extends Command
         $this->info("✔ Role '{$role->name}' berhasil ditambahkan.");
 
         $this->line("User  : {$profile->display_name}");
-        $this->line("Email : {$profile->email}");
+        $this->line("Email : {$user->email}");
 
         return self::SUCCESS;
     }

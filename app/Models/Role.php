@@ -22,9 +22,9 @@ class Role extends Model
             Profile::class,
             'profile_roles',
             'role_id',
-            'profile_puid',
+            'profile_id',
             'id',
-            'puid',
+            'id',
         );
     }
 }

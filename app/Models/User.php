@@ -1,50 +1,86 @@
 <?php
 
-// namespace App\Models;
+namespace App\Models;
 
-// // use Illuminate\Contracts\Auth\MustVerifyEmail;
-// use Database\Factories\UserFactory;
-// use Illuminate\Database\Eloquent\Attributes\Fillable;
-// use Illuminate\Database\Eloquent\Attributes\Hidden;
-// use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use Illuminate\Foundation\Auth\User as Authenticatable;
-// use Illuminate\Notifications\Notifiable;
-// use Laravel\Sanctum\HasApiTokens;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Session;
+use Laravel\Sanctum\HasApiTokens;
 
-// #[Fillable(['name', 'email', 'password', 'study_class_id', 'role'])]
-// #[Hidden(['password', 'remember_token'])]
-// class User extends Authenticatable
-// {
-//     /** @use HasFactory<UserFactory> */
-//     use HasFactory, HasApiTokens, Notifiable;
 
-//     /**
-//      * Get the attributes that should be cast.
-//      *
-//      * @return array<string, string>
-//      */
-//     protected $fillable = [
-//         'study_class_id',
-//         'name',
-//         'email',
-//         'password',
-//         'role',
-//     ];
-//     protected function casts(): array
-//     {
-//         return [
-//             'email_verified_at' => 'datetime',
-//             'password' => 'hashed',
-//         ];
-//     }
+#[Hidden([
+    'password',
+    'remember_token',
+])]
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasFactory,
+        HasApiTokens,
+        Notifiable,
+        HasUuids;
 
-//     public function studyClass()
-//     {
-//         return $this->belongsTo(StudyClass::class);
-//     }
+    protected $keyType = 'string';
 
-//     public function submissions()
-//     {
-//         return $this->hasMany(Submission::class);
-//     }
-// }
+    public $incrementing = false;
+
+    protected $fillable = [
+        'puid',
+        'name',
+        'email',
+        'password',
+        'provider',
+        'avatar',
+        'last_login_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'last_login_at'      => 'datetime',
+            'password'           => 'hashed',
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Session::class);
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function isLocal(): bool
+    {
+        return $this->provider === 'local';
+    }
+
+    public function isPinat(): bool
+    {
+        return $this->provider === 'pinat';
+    }
+}

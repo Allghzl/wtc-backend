@@ -2,28 +2,26 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Profile extends Model
 {
-    use SoftDeletes;
-
-    protected $primaryKey = 'puid';
-
-    public $incrementing = false;
+    use SoftDeletes, HasUuids;
 
     protected $keyType = 'string';
 
+    public $incrementing = false;
+
     protected $fillable = [
-        'puid',
+        'user_id',
         'study_class_id',
         'nickname',
-        'points',
         'display_name',
-        'avatar_key',
-        'email',
+        'points',
         'last_login_at',
         'last_synced_at',
     ];
@@ -36,14 +34,42 @@ class Profile extends Model
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function studyClass(): BelongsTo
+    {
+        return $this->belongsTo(StudyClass::class);
+    }
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(
             Role::class,
             'profile_roles',
-            'profile_puid',
+            'profile_id',
             'role_id',
-            'puid',
+            'id',
+            'id',
+        );
+    }
+
+    public function achievements(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Achievement::class,
+            'profile_achievements',
+            'profile_id',
+            'achievement_id',
+            'id',
             'id',
         );
     }
