@@ -28,8 +28,8 @@ class ModuleUpdateRequest extends FormRequest
         return [
             'track_id' => ['required', 'exists:tracks,id'],
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique('modules', 'slug')->ignore($this->slug)],
-            'order' => ['required', 'integer', Rule::unique('modules', 'order')->ignore($this->slug)],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('modules', 'slug')->ignore($this->module)],
+            'order' => ['required', 'integer', Rule::unique('modules', 'order')->ignore($this->module)],
         ];
     }
 }

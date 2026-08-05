@@ -64,7 +64,7 @@ class TrackController extends Controller
         $track->update($request->validated());
 
         return $this->success(
-            new TrackResource($track->fresh()),
+            new TrackResource($track),
             'Track updated successfully'
         );
     }
