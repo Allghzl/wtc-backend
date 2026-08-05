@@ -31,9 +31,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/challenges/{challenge}/submit', [SubmissionController::class, 'store']);
     Route::apiResource('study-classes', StudyClassController::class);
 
-    Route::get('/me', function (Request $request) {
-        return response()->json($request->user());
-    });
+    Route::get('/me', [AuthController::class, 'me']);
 });
 
 

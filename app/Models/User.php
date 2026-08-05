@@ -83,4 +83,9 @@ class User extends Authenticatable
     {
         return $this->provider === 'pinat';
     }
+
+    public function hasRole(string $roleName): bool
+    {
+        return $this->profile?->roles()->where('name', $roleName)->exists() ?? false;
+    }
 }

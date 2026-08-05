@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Profile;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -122,5 +123,17 @@ class AuthService
     public function createProfile(User $user, ?object $payload = null): Profile
     {
         return $this->profiles->create($user, $payload);
+    }
+
+    public function me(Request $request)
+    {
+        $user = $request->user();
+
+        $user->load('profile.roles');
+
+        return response()->json([
+            'user' => $user,
+            'profile' => $user->profile,
+        ]);
     }
 }
