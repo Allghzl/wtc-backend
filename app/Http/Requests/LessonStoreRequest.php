@@ -31,7 +31,7 @@ class LessonStoreRequest extends FormRequest
             'slug' => ['required', 'string'],
             'video_url' => ['nullable', 'url'],
             'order' => [
-                'required',
+                'nullable',
                 'integer',
                 Rule::unique('lessons')
                     ->where(fn($query) => $query->where('module_id', $this->module_id)),

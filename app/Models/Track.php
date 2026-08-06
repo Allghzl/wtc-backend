@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Track extends Model
 {
-
     use SoftDeletes;
 
     protected $fillable = [
@@ -17,6 +16,17 @@ class Track extends Model
         'order',
         'image_url'
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($track) {
+            if (is_null($track->order)) {
+                $track->order = static::max('order') + 1;
+            }
+        });
+    }
 
     public function getRouteKeyName()
     {

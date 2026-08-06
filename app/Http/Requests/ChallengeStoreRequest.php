@@ -9,6 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class ChallengeStoreRequest extends FormRequest
 {
     use ApiValidationResponse;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,9 +38,12 @@ class ChallengeStoreRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:challenges,slug'],
             'type' => ['required', 'string', 'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group'],
+            'difficulty' => ['nullable', 'string', 'in:easy,medium,hard'],
+            'order' => ['nullable', 'integer'],
             'content' => ['required', 'string'],
             'metadata' => ['nullable', 'array'],
-            'max_score' => ['required', 'integer', 'min:1', 'max:100']
+            'max_score' => ['required', 'integer', 'min:1', 'max:100'],
+            'points' => ['nullable', 'integer', 'min:0'],
         ];
     }
 

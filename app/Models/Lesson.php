@@ -17,6 +17,19 @@ class Lesson extends Model
         'module_id'
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($lesson) {
+            if (is_null($lesson->order)) {
+                $maxOrder = static::where('module_id', $lesson->module_id)
+                    ->max('order') ?? 0;
+                $lesson->order = $maxOrder + 1;
+            }
+        });
+    }
+
     public function getRouteKeyName()
     {
         return 'slug';

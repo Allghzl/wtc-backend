@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Module extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'title',
         'slug',
@@ -15,6 +16,22 @@ class Module extends Model
         'order',
         'track_id'
     ];
+
+    // ========================================
+    // ✨ TAMBAHIN INI - Auto-populate order
+    // ========================================
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($module) {
+            if (is_null($module->order)) {
+                $maxOrder = static::where('track_id', $module->track_id)
+                    ->max('order') ?? 0;
+                $module->order = $maxOrder + 1;
+            }
+        });
+    }
 
     public function getRouteKeyName()
     {
@@ -25,10 +42,12 @@ class Module extends Model
     {
         return $this->belongsTo(Track::class);
     }
+
     public function lessons()
     {
         return $this->hasMany(Lesson::class);
     }
+
     public function challenges()
     {
         return $this->hasMany(Challenge::class);
