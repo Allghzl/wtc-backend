@@ -15,6 +15,7 @@ return new class extends Migration
             $table->enum('difficulty', ['easy', 'medium', 'hard'])->nullable()->after('type');
             $table->integer('order')->default(0)->after('difficulty');
             $table->integer('points')->default(0)->after('max_score')->comment('Points for user exp/leaderboarding');
+            $table->unsignedInteger('allowed_attempts')->default(1)->after('points')->comment('Number of allowed attempts for the challenge');
         });
     }
 

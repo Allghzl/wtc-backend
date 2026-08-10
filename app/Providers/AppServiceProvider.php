@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Event::listen(SubmissionCreated::class, CalculateScore::class);
+        // Event::listen(SubmissionCreated::class, CalculateScore::class);
         Event::listen(ScorePublished::class, SendNotification::class);
 
         Scramble::configure()->routes(function (Route $route) {

@@ -21,7 +21,11 @@ class ChallengeStoreRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'settings' => $this->input('settings') ?? [],
             'metadata' => $this->input('metadata') ?? [],
+            'order' => $this->input('order') ?? 0,
+            'points' => $this->input('points') ?? 0,
+            'allowed_attempts' => $this->input('allowed_attempts') ?? 1,
         ]);
     }
 
@@ -33,27 +37,140 @@ class ChallengeStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'module_id' => ['nullable', 'required_without:lesson_id', 'prohibits:lesson_id', 'exists:modules,id'],
-            'lesson_id' => ['nullable', 'required_without:module_id', 'prohibits:module_id', 'exists:lessons,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:challenges,slug'],
-            'type' => ['required', 'string', 'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group'],
-            'difficulty' => ['nullable', 'string', 'in:easy,medium,hard'],
-            'order' => ['nullable', 'integer'],
-            'content' => ['required', 'string'],
-            'metadata' => ['nullable', 'array'],
-            'max_score' => ['required', 'integer', 'min:1', 'max:100'],
-            'points' => ['nullable', 'integer', 'min:0'],
+            /*
+            |--------------------------------------------------------------------------
+            | Relation
+            |--------------------------------------------------------------------------
+            */
+
+            'module_id' => [
+                'nullable',
+                'required_without:lesson_id',
+                'prohibits:lesson_id',
+                'exists:modules,id',
+            ],
+
+            'lesson_id' => [
+                'nullable',
+                'required_without:module_id',
+                'prohibits:module_id',
+                'exists:lessons,id',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Basic Information
+            |--------------------------------------------------------------------------
+            */
+
+            'title' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:challenges,slug',
+            ],
+
+            'type' => [
+                'required',
+                'string',
+                'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
+            ],
+
+            'difficulty' => [
+                'nullable',
+                'string',
+                'in:easy,medium,hard',
+            ],
+
+            'order' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Content
+            |--------------------------------------------------------------------------
+            */
+
+            'content' => [
+                'required',
+                'string',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Challenge Configuration
+            |--------------------------------------------------------------------------
+            */
+
+            'settings' => [
+                'nullable',
+                'array',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Metadata
+            |--------------------------------------------------------------------------
+            */
+
+            'metadata' => [
+                'nullable',
+                'array',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Scoring & Attempts
+            |--------------------------------------------------------------------------
+            */
+
+            'max_score' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+
+            'points' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+
+            'allowed_attempts' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'module_id.required_without' => 'Pilih salah satu: Challenge harus terikat ke Module atau Lesson.',
-            'module_id.prohibits'        => 'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
-            'lesson_id.required_without' => 'Pilih salah satu: Challenge harus terikat ke Module atau Lesson.',
-            'lesson_id.prohibits'        => 'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
+            'module_id.required_without' =>
+            'Pilih salah satu: Challenge harus terikat ke Module atau Lesson.',
+
+            'module_id.prohibits' =>
+            'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
+
+            'lesson_id.required_without' =>
+            'Pilih salah satu: Challenge harus terikat ke Module atau Lesson.',
+
+            'lesson_id.prohibits' =>
+            'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
+
+            'allowed_attempts.min' =>
+            'Jumlah percobaan minimal adalah 1.',
         ];
     }
 }

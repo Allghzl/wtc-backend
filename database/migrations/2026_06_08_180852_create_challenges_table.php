@@ -18,7 +18,8 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->string('type');
             $table->text('content');
-            $table->jsonb('metadata');
+            $table->jsonb('settings')->nullable();
+            $table->jsonb('metadata')->nullable();
             $table->integer('max_score');
             $table->timestamps();
             $table->softDeletes();

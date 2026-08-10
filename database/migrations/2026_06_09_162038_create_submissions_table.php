@@ -13,9 +13,17 @@ return new class extends Migration
     {
         Schema::create('submissions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('challenge_id')->constrained()->onDelete('cascade');
-            $table->foreignUuid('profile_id')->constrained('profiles')->onDelete('cascade');
+            $table->foreignId('challenge_id')
+                ->constrained()
+                ->cascadeOnDelete();
+            $table->foreignUuid('profile_id')
+                ->constrained('profiles')
+                ->cascadeOnDelete();
+            $table->unsignedInteger('attempt_number');
             $table->string('status');
+            $table->timestamp('submitted_at')
+                ->nullable()
+                ->comment('Actual submission time, different from created_at for drafts');
             $table->json('submitted_content')->nullable();
             $table->string('file_path')->nullable();
             $table->integer('auto_score')->nullable();
@@ -23,6 +31,11 @@ return new class extends Migration
             $table->text('feedback')->nullable();
             $table->softDeletes();
             $table->timestamps();
+
+            $table->unique(
+                ['challenge_id', 'profile_id', 'attempt_number'],
+                'submissions_unique_attempt'
+            );
         });
     }
 

@@ -49,28 +49,6 @@ return new class extends Migration
             $table->index(['subject_type', 'subject_id']);
         });
 
-        Schema::create('challenge_attempts', function (Blueprint $table) {
-            $table->id();
-
-            $table->foreignUuid('profile_id')
-                ->constrained('profiles')
-                ->cascadeOnDelete();
-
-            $table->foreignId('challenge_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('submission_id')->nullable()->constrained()->nullOnDelete();
-
-            $table->unsignedInteger('attempt_number');
-            $table->integer('score')->nullable();
-            $table->string('status')->default('pending');
-
-            $table->timestamps();
-
-            $table->unique(
-                ['profile_id', 'challenge_id', 'attempt_number'],
-                'challenge_attempts_unique_number'
-            );
-        });
-
         Schema::create('leaderboard_snapshots', function (Blueprint $table) {
             $table->id();
 
@@ -192,7 +170,6 @@ return new class extends Migration
         Schema::dropIfExists('notification_receivers');
         Schema::dropIfExists('notifications');
         Schema::dropIfExists('leaderboard_snapshots');
-        Schema::dropIfExists('challenge_attempts');
         Schema::dropIfExists('activity_logs');
         Schema::dropIfExists('student_progress');
     }

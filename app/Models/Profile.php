@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Profile extends Model
@@ -48,6 +49,11 @@ class Profile extends Model
     public function studyClass(): BelongsTo
     {
         return $this->belongsTo(StudyClass::class);
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'profile_id');
     }
 
     public function roles(): BelongsToMany

@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class SubmissionResource extends JsonResource
+class StudentSubmissionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,7 +16,6 @@ class SubmissionResource extends JsonResource
     {
         return [
             'id'                => $this->id,
-            'attempt_number'    => $this->attempt_number,
             'challenge_id'      => $this->challenge_id,
             'profile_id'        => $this->profile_id,
             'status'            => $this->status,

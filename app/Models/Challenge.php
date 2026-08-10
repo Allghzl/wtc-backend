@@ -15,8 +15,10 @@ class Challenge extends Model
         'difficulty',
         'order',
         'content',
+        'settings',
         'metadata',
         'max_score',
+        'allowed_attempts',
         'points',
     ];
 
@@ -42,7 +44,12 @@ class Challenge extends Model
     protected function casts(): array
     {
         return [
+            'settings' => 'array',
             'metadata' => 'array',
+            'allowed_attempts' => 'integer',
+            'max_score' => 'integer',
+            'points' => 'integer',
+            'deleted_at' => 'datetime',
         ];
     }
 

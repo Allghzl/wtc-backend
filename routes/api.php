@@ -24,15 +24,22 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/modules/{module}/lessons', [LessonController::class, 'getByModule']);
     Route::get('/modules/{module}/challenges', [ChallengeController::class, 'getByModule']);
 
+    Route::get('/challenges/{challenge}/submissions',   [SubmissionController::class, 'index']);
+    Route::post('/challenges/{challenge}/submit',       [SubmissionController::class, 'store']);
+    Route::get('/challenges/{challenge}/my-submissions', [SubmissionController::class, 'mySubmissions']);
+    Route::get('/submissions/{submission}',             [SubmissionController::class, 'show']);
+    Route::patch('/submissions/{submission}',           [SubmissionController::class, 'update']);
+    Route::get('/submissions/{submission}/file',        [SubmissionController::class, 'file']);
+
     Route::apiResource('tracks', TrackController::class);
     Route::apiResource('modules', ModuleController::class);
     Route::apiResource('lessons', LessonController::class);
     Route::apiResource('challenges', ChallengeController::class);
-    Route::post('/challenges/{challenge}/submit', [SubmissionController::class, 'store']);
     Route::apiResource('study-classes', StudyClassController::class);
 
     Route::get('/me', [AuthController::class, 'me']);
 });
+
 
 
 Route::get('/debug/token', function (
