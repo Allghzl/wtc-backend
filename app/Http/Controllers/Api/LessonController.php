@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LessonIndexRequest;
 use App\Http\Requests\LessonStoreRequest;
 use App\Http\Requests\LessonUpdateRequest;
 use App\Http\Resources\LessonResource;
@@ -17,9 +18,23 @@ class LessonController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(LessonIndexRequest $request)
     {
-        $lessons = Lesson::orderBy('order')->get();
+        $query = Lesson::query();
+
+        // Filter by module_id if provided
+        $query->when($request->input('module_id'), function ($q, $moduleId) {
+            $q->where('module_id', $moduleId);
+        });
+
+        // Filter by track_id if provided
+        $query->when($request->input('track_id'), function ($q, $trackId) {
+            $q->whereHas('module', function ($moduleQuery) use ($trackId) {
+                $moduleQuery->where('track_id', $trackId);
+            });
+        });
+
+        $lessons = $query->orderBy('order')->get();
 
         if ($lessons->isEmpty()) {
             return $this->error('No lessons found', 404);

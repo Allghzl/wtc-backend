@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ModuleIndexRequest;
 use App\Http\Requests\ModuleStoreRequest;
 use App\Http\Requests\ModuleUpdateRequest;
 use App\Http\Resources\ModuleResource;
@@ -17,9 +18,16 @@ class ModuleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ModuleIndexRequest $request)
     {
-        $modules = Module::orderBy('order')->get();
+        $query = Module::query();
+
+        // Filter by track_id if provided
+        $query->when($request->input('track_id'), function ($q, $trackId) {
+            $q->where('track_id', $trackId);
+        });
+
+        $modules = $query->orderBy('order')->get();
 
         if ($modules->isEmpty()) {
             return $this->error('No modules found', 404);
