@@ -8,6 +8,8 @@ use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\AuthService;
+use App\Services\PinatJwtService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -16,6 +18,76 @@ class AuthController extends Controller
 {
     use ApiResponse;
 
+    public function __construct(
+        protected AuthService $auth,
+        protected PinatJwtService $pinatJwt,
+    ) {}
+
+    /**
+     * Login / synchronize user from PinatAuth.
+     */
+    public function sso(Request $request)
+    {
+        $request->validate([
+            'access_token' => [
+                'required',
+                'string',
+            ],
+        ]);
+
+        try {
+            $accessToken = $request->input('access_token');
+
+            $payload = $this->pinatJwt->verify($accessToken);
+
+            if (
+                ! isset($payload->sub) ||
+                ! isset($payload->type) ||
+                $payload->type !== 'user'
+            ) {
+                return $this->error(
+                    'Invalid PinatAuth token.',
+                    401
+                );
+            }
+
+            $avatarResponse = Http::withToken($accessToken)
+                ->get(
+                    rtrim(config('pinat-auth.url'), '/')
+                        . '/api/auth/avatar'
+                );
+
+            if ($avatarResponse->successful()) {
+                $avatarUrl = $avatarResponse->json('url');
+
+                if ($avatarUrl) {
+                    $payload->avatar_url = $avatarUrl;
+                }
+            }
+
+            $result = $this->auth->syncPinat($payload);
+
+            return $this->success([
+                'user' => new UserResource($result['user']),
+                'profile' => new ProfileResource($result['profile']),
+                'token' => $result['token'],
+            ], 'PinatAuth login successful.');
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 401);
+        }
+    }
+
+    /**
+     * Register local account.
+     */
     public function register(UserRegisterRequest $request)
     {
         $data = $request->validated();
