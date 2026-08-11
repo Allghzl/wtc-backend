@@ -8,10 +8,11 @@ use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\ProfileResource;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Services\AuthService;
+use App\Services\PinatJwtService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -20,9 +21,12 @@ class AuthController extends Controller
 
     public function __construct(
         protected AuthService $auth,
-        protected \App\Services\PinatJwtService $pinatJwt
+        protected PinatJwtService $pinatJwt,
     ) {}
 
+    /**
+     * Login / synchronize user from PinatAuth.
+     */
     public function sso(Request $request)
     {
         $request->validate([
@@ -33,16 +37,14 @@ class AuthController extends Controller
         ]);
 
         try {
-            $token = $request->input('access_token');
+            $accessToken = $request->input('access_token');
 
-            $payload = $this->pinatJwt->verify($token);
-
-            logger()->info('PinatAuth JWT verified', [
-                'sub' => $payload->sub ?? null,
-                'email' => $payload->email ?? null,
-                'name' => $payload->name ?? null,
-                'type' => $payload->type ?? null,
-            ]);
+            /*
+             * -------------------------------------------------------------
+             * 1. Verify PinatAuth JWT
+             * -------------------------------------------------------------
+             */
+            $payload = $this->pinatJwt->verify($accessToken);
 
             if (
                 ! isset($payload->sub) ||
@@ -55,13 +57,34 @@ class AuthController extends Controller
                 );
             }
 
-            $result = $this->auth->syncPinat($payload);
+            /*
+             * -------------------------------------------------------------
+             * 2. Get avatar URL from PinatAuth
+             * -------------------------------------------------------------
+             *
+             * JWT hanya membawa avatar_key.
+             * Endpoint avatar PinatAuth yang menghasilkan URL avatar.
+             */
+            $avatarResponse = Http::withToken($accessToken)
+                ->get(
+                    rtrim(config('pinat-auth.url'), '/')
+                        . '/api/auth/avatar'
+                );
 
-            logger()->info('PinatAuth user synced', [
-                'user_id' => $result['user']->id,
-                'puid' => $result['user']->puid,
-                'profile_id' => $result['profile']->id,
-            ]);
+            if ($avatarResponse->successful()) {
+                $avatarUrl = $avatarResponse->json('url');
+
+                if ($avatarUrl) {
+                    $payload->avatar_url = $avatarUrl;
+                }
+            }
+
+            /*
+             * -------------------------------------------------------------
+             * 3. Sync identity + create WTC Sanctum token
+             * -------------------------------------------------------------
+             */
+            $result = $this->auth->syncPinat($payload);
 
             return $this->success([
                 'user' => new UserResource($result['user']),
@@ -69,19 +92,10 @@ class AuthController extends Controller
                 'token' => $result['token'],
             ], 'PinatAuth login successful.');
         } catch (\Throwable $e) {
-
-            logger()->error('PinatAuth SSO failed', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            report($e);
 
             return $this->error(
-                app()->environment('local')
-                    ? $e->getMessage()
-                    : 'Invalid or expired PinatAuth token.',
+                'Invalid or expired PinatAuth token.',
                 401
             );
         }
@@ -100,12 +114,11 @@ class AuthController extends Controller
             UserRegistered::dispatch($result['user']);
 
             return $this->success([
-                'user'    => new UserResource($result['user']),
+                'user' => new UserResource($result['user']),
                 'profile' => new ProfileResource($result['profile']),
-                'token'   => $result['token'],
+                'token' => $result['token'],
             ], 'User registered successfully.', 201);
         } catch (ValidationException $e) {
-
             return $this->error(
                 $e->getMessage(),
                 422
@@ -124,12 +137,11 @@ class AuthController extends Controller
             );
 
             return $this->success([
-                'user'    => new UserResource($result['user']),
+                'user' => new UserResource($result['user']),
                 'profile' => new ProfileResource($result['profile']),
-                'token'   => $result['token'],
+                'token' => $result['token'],
             ], 'Login successful.');
         } catch (ValidationException $e) {
-
             return $this->error(
                 'Invalid email or password.',
                 401
@@ -158,7 +170,9 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        $user = $request->user()->load('profile.roles');
+        $user = $request
+            ->user()
+            ->load('profile.roles');
 
         return $this->success([
             'user' => new UserResource($user),

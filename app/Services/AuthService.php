@@ -37,7 +37,9 @@ class AuthService
 
             $profile = $this->createProfile($user);
 
-            $token = $user->createToken('auth')->plainTextToken;
+            $token = $user
+                ->createToken('auth')
+                ->plainTextToken;
 
             $profile->load('roles');
 
@@ -54,7 +56,10 @@ class AuthService
      */
     public function login(array $credentials): array
     {
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where(
+            'email',
+            $credentials['email']
+        )->first();
 
         if (! $user) {
             throw ValidationException::withMessages([
@@ -62,7 +67,10 @@ class AuthService
             ]);
         }
 
-        if (! Hash::check($credentials['password'], $user->password)) {
+        if (! Hash::check(
+            $credentials['password'],
+            $user->password
+        )) {
             throw ValidationException::withMessages([
                 'password' => 'Invalid credentials.',
             ]);
@@ -81,7 +89,9 @@ class AuthService
         $profile->refresh();
         $profile->load('roles');
 
-        $token = $user->createToken('auth')->plainTextToken;
+        $token = $user
+            ->createToken('auth')
+            ->plainTextToken;
 
         return [
             'user' => $user,
@@ -94,8 +104,13 @@ class AuthService
      * Sinkronisasi user dari PinatAuth.
      *
      * JWT PinatAuth diverifikasi oleh AuthController.
-     * Method ini hanya menangani sinkronisasi identity
-     * ke database WTC dan membuat Sanctum token WTC.
+     * AuthController juga mengambil avatar URL dari PinatAuth.
+     *
+     * Method ini hanya menangani:
+     * - sinkronisasi identity
+     * - pembuatan profile
+     * - update profile
+     * - pembuatan Sanctum token WTC
      */
     public function syncPinat(object $payload): array
     {
@@ -109,7 +124,15 @@ class AuthService
                     'name' => $payload->name ?? null,
                     'email' => $payload->email ?? null,
                     'provider' => 'pinat',
-                    'avatar' => $payload->avatar ?? $payload->avatar_url ?? $payload->avatar_key ?? null,
+
+                    /*
+                     * Gunakan URL avatar dari PinatAuth.
+                     *
+                     * Jangan fallback ke avatar_key kalau
+                     * targetnya memang ingin menyimpan URL.
+                     */
+                    'avatar' => $payload->avatar_url ?? null,
+
                     'email_verified_at' => now(),
                 ]
             );
@@ -117,11 +140,15 @@ class AuthService
             $profile = $user->profile;
 
             if (! $profile) {
-                $profile = $this->createProfile($user, $payload);
+                $profile = $this->createProfile(
+                    $user,
+                    $payload
+                );
             } else {
                 $profile->update([
                     'display_name' => $payload->name
                         ?? $profile->display_name,
+
                     'last_login_at' => now(),
                     'last_synced_at' => now(),
                 ]);
@@ -129,6 +156,13 @@ class AuthService
 
             $profile->load('roles');
 
+            /*
+             * Buat Sanctum token milik WTC.
+             *
+             * Setelah ini frontend menggunakan token WTC,
+             * bukan lagi token JWT PinatAuth untuk request
+             * endpoint WTC.
+             */
             $token = $user
                 ->createToken('pinat-auth')
                 ->plainTextToken;
@@ -148,7 +182,10 @@ class AuthService
         User $user,
         ?object $payload = null
     ): Profile {
-        return $this->profiles->create($user, $payload);
+        return $this->profiles->create(
+            $user,
+            $payload
+        );
     }
 
     /**
