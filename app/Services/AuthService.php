@@ -109,9 +109,8 @@ class AuthService
                     'name' => $payload->name ?? null,
                     'email' => $payload->email ?? null,
                     'provider' => 'pinat',
-                    'avatar' => $payload->avatar_key ?? null,
+                    'avatar' => $payload->avatar ?? $payload->avatar_url ?? $payload->avatar_key ?? null,
                     'email_verified_at' => now(),
-                    'last_login_at' => now(),
                 ]
             );
 
@@ -120,10 +119,9 @@ class AuthService
             if (! $profile) {
                 $profile = $this->createProfile($user, $payload);
             } else {
-
                 $profile->update([
-                    'nickname' => $payload->name ?? $profile->nickname,
-                    'display_name' => $payload->name ?? $profile->display_name,
+                    'display_name' => $payload->name
+                        ?? $profile->display_name,
                     'last_login_at' => now(),
                     'last_synced_at' => now(),
                 ]);

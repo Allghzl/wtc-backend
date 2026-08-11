@@ -33,11 +33,16 @@ class AuthController extends Controller
         ]);
 
         try {
+            $token = $request->input('access_token');
 
-            $payload = $this->pinatJwt->verify(
-                $request->input('access_token')
-            );
+            $payload = $this->pinatJwt->verify($token);
 
+            logger()->info('PinatAuth JWT verified', [
+                'sub' => $payload->sub ?? null,
+                'email' => $payload->email ?? null,
+                'name' => $payload->name ?? null,
+                'type' => $payload->type ?? null,
+            ]);
 
             if (
                 ! isset($payload->sub) ||
@@ -50,8 +55,13 @@ class AuthController extends Controller
                 );
             }
 
-
             $result = $this->auth->syncPinat($payload);
+
+            logger()->info('PinatAuth user synced', [
+                'user_id' => $result['user']->id,
+                'puid' => $result['user']->puid,
+                'profile_id' => $result['profile']->id,
+            ]);
 
             return $this->success([
                 'user' => new UserResource($result['user']),
@@ -60,10 +70,18 @@ class AuthController extends Controller
             ], 'PinatAuth login successful.');
         } catch (\Throwable $e) {
 
-            report($e);
+            logger()->error('PinatAuth SSO failed', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return $this->error(
-                'Invalid or expired PinatAuth token.',
+                app()->environment('local')
+                    ? $e->getMessage()
+                    : 'Invalid or expired PinatAuth token.',
                 401
             );
         }

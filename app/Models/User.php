@@ -36,6 +36,7 @@ class User extends Authenticatable
         'provider',
         'avatar',
         'last_login_at',
+        'email_verified_at',
     ];
 
     protected function casts(): array
@@ -87,7 +88,7 @@ class User extends Authenticatable
     public function hasRole(string $roleName): bool
     {
         return $this->profile()
-            ->whereHas('roles', fn ($query) => $query->where('name', $roleName))
+            ->whereHas('roles', fn($query) => $query->where('name', $roleName))
             ->exists();
     }
 }
