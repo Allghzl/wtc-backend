@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChallengeIndexRequest;
 use App\Http\Requests\ChallengeStoreRequest;
 use App\Http\Requests\ChallengeUpdateRequest;
 use App\Http\Resources\ChallengeResource;
@@ -17,9 +18,35 @@ class ChallengeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(ChallengeIndexRequest $request)
     {
-        $challenges = Challenge::all();
+        $query = Challenge::query();
+
+        // Filter by module_id if provided (challenges directly under a module, not under a lesson)
+        $query->when($request->input('module_id'), function ($q, $moduleId) {
+            $q->where('module_id', $moduleId)->whereNull('lesson_id');
+        });
+
+        // Filter by lesson_id if provided (challenges under a specific lesson)
+        $query->when($request->input('lesson_id'), function ($q, $lessonId) {
+            $q->where('lesson_id', $lessonId);
+        });
+
+        // Filter by track_id if provided (challenges in any module/lesson within that track)
+        $query->when($request->input('track_id'), function ($q, $trackId) {
+            $q->where(function ($subQuery) use ($trackId) {
+                // Challenges directly under modules in this track
+                $subQuery->whereHas('module', function ($moduleQuery) use ($trackId) {
+                    $moduleQuery->where('track_id', $trackId);
+                })
+                // OR challenges under lessons whose modules are in this track
+                ->orWhereHas('lesson.module', function ($moduleQuery) use ($trackId) {
+                    $moduleQuery->where('track_id', $trackId);
+                });
+            });
+        });
+
+        $challenges = $query->orderBy('order')->get();
 
         if ($challenges->isEmpty()) {
             return $this->error('No challenges found', 404);

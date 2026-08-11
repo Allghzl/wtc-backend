@@ -22,7 +22,6 @@ class ModuleController extends Controller
     {
         $query = Module::query();
 
-        // Filter by track_id if provided
         $query->when($request->input('track_id'), function ($q, $trackId) {
             $q->where('track_id', $trackId);
         });

@@ -8,6 +8,7 @@ use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\ProfileResource;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Services\AuthService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,54 @@ class AuthController extends Controller
 
     public function __construct(
         protected AuthService $auth,
+        protected \App\Services\PinatJwtService $pinatJwt
     ) {}
+
+    public function sso(Request $request)
+    {
+        $request->validate([
+            'access_token' => [
+                'required',
+                'string',
+            ],
+        ]);
+
+        try {
+
+            $payload = $this->pinatJwt->verify(
+                $request->input('access_token')
+            );
+
+
+            if (
+                ! isset($payload->sub) ||
+                ! isset($payload->type) ||
+                $payload->type !== 'user'
+            ) {
+                return $this->error(
+                    'Invalid PinatAuth token.',
+                    401
+                );
+            }
+
+
+            $result = $this->auth->syncPinat($payload);
+
+            return $this->success([
+                'user' => new UserResource($result['user']),
+                'profile' => new ProfileResource($result['profile']),
+                'token' => $result['token'],
+            ], 'PinatAuth login successful.');
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            return $this->error(
+                'Invalid or expired PinatAuth token.',
+                401
+            );
+        }
+    }
 
     /**
      * Register local account.

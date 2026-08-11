@@ -74,12 +74,14 @@ class AuthService
             $profile = $this->createProfile($user);
         }
 
-        $profile->update(['last_login_at' => now()]);
+        $profile->update([
+            'last_login_at' => now(),
+        ]);
+
         $profile->refresh();
+        $profile->load('roles');
 
         $token = $user->createToken('auth')->plainTextToken;
-
-        $profile->load('roles');
 
         return [
             'user' => $user,
@@ -90,8 +92,12 @@ class AuthService
 
     /**
      * Sinkronisasi user dari PinatAuth.
+     *
+     * JWT PinatAuth diverifikasi oleh AuthController.
+     * Method ini hanya menangani sinkronisasi identity
+     * ke database WTC dan membuat Sanctum token WTC.
      */
-    public function syncPinat(object $payload): User
+    public function syncPinat(object $payload): array
     {
         return DB::transaction(function () use ($payload) {
 
@@ -100,31 +106,56 @@ class AuthService
                     'puid' => $payload->sub,
                 ],
                 [
-                    'email' => $payload->email,
-                    'username' => $payload->username
-                        ?? explode('@', $payload->email)[0],
+                    'name' => $payload->name ?? null,
+                    'email' => $payload->email ?? null,
                     'provider' => 'pinat',
                     'avatar' => $payload->avatar_key ?? null,
                     'email_verified_at' => now(),
+                    'last_login_at' => now(),
                 ]
             );
 
-            if (! $user->profile) {
-                $this->createProfile($user, $payload);
+            $profile = $user->profile;
+
+            if (! $profile) {
+                $profile = $this->createProfile($user, $payload);
+            } else {
+
+                $profile->update([
+                    'nickname' => $payload->name ?? $profile->nickname,
+                    'display_name' => $payload->name ?? $profile->display_name,
+                    'last_login_at' => now(),
+                    'last_synced_at' => now(),
+                ]);
             }
 
-            return $user->fresh('profile');
+            $profile->load('roles');
+
+            $token = $user
+                ->createToken('pinat-auth')
+                ->plainTextToken;
+
+            return [
+                'user' => $user->fresh(),
+                'profile' => $profile->fresh('roles'),
+                'token' => $token,
+            ];
         });
     }
 
     /**
      * Membuat profile pertama kali.
      */
-    public function createProfile(User $user, ?object $payload = null): Profile
-    {
+    public function createProfile(
+        User $user,
+        ?object $payload = null
+    ): Profile {
         return $this->profiles->create($user, $payload);
     }
 
+    /**
+     * Current authenticated user.
+     */
     public function me(Request $request)
     {
         $user = $request->user();
