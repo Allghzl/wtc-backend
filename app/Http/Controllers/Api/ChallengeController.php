@@ -46,13 +46,43 @@ class ChallengeController extends Controller
             });
         });
 
-        $challenges = $query->orderBy('order')->get();
+        // Apply search filter
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('title', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        });
+
+        $query->orderBy('order');
+
+        // Handle pagination
+        $pagination = $request->input('pagination', true);
+
+        if ($pagination === false || $pagination === 'false' || $pagination === 0) {
+            $challenges = $query->get();
+
+            if ($challenges->isEmpty()) {
+                return $this->error('No challenges found', 404);
+            }
+
+            return $this->success(ChallengeResource::collection($challenges), 'Challenges data collected successfully');
+        }
+
+        // Paginated response
+        $perPage = $request->input('per_page', 15);
+        $challenges = $query->paginate($perPage);
 
         if ($challenges->isEmpty()) {
             return $this->error('No challenges found', 404);
         }
 
-        return $this->success(ChallengeResource::collection($challenges), 'Challenges data collected successfully');
+        return $this->successWithPagination(
+            ChallengeResource::collection($challenges->items()),
+            'Challenges data collected successfully',
+            $challenges
+        );
     }
 
     /**

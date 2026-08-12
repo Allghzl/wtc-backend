@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStudyClassRequest;
+use App\Http\Requests\StudyClassIndexRequest;
 use App\Http\Requests\UpdateStudyClassRequest;
 use App\Models\StudyClass;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
 
 class StudyClassController extends Controller
 {
@@ -15,11 +15,33 @@ class StudyClassController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(StudyClassIndexRequest $request)
     {
-        $studyClasses = StudyClass::all();
+        $query = StudyClass::query();
 
-        return $this->success($studyClasses);
+        // Apply search filter
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where('name', 'like', "%{$search}%");
+        });
+
+        // Handle pagination
+        $pagination = $request->input('pagination', true);
+
+        if ($pagination === false || $pagination === 'false' || $pagination === 0) {
+            $studyClasses = $query->get();
+
+            return $this->success($studyClasses);
+        }
+
+        // Paginated response
+        $perPage = $request->input('per_page', 15);
+        $studyClasses = $query->paginate($perPage);
+
+        return $this->successWithPagination(
+            $studyClasses->items(),
+            'Success',
+            $studyClasses
+        );
     }
 
     /**

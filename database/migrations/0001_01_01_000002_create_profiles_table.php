@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password')->nullable();
             $table->enum('provider', ['local', 'pinat'])->default('local')->index();
-            $table->string('avatar')->nullable();
+            $table->text('avatar')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();

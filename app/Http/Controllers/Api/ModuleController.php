@@ -22,19 +22,50 @@ class ModuleController extends Controller
     {
         $query = Module::query();
 
+        // Apply existing track_id filter
         $query->when($request->input('track_id'), function ($q, $trackId) {
             $q->where('track_id', $trackId);
         });
 
-        $modules = $query->orderBy('order')->get();
+        // Apply search filter
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('title', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        });
+
+        $query->orderBy('order');
+
+        // Handle pagination
+        $pagination = $request->input('pagination', true);
+
+        if ($pagination === false || $pagination === 'false' || $pagination === 0) {
+            $modules = $query->get();
+
+            if ($modules->isEmpty()) {
+                return $this->error('No modules found', 404);
+            }
+
+            return $this->success(
+                ModuleResource::collection($modules),
+                'retrieved successfully'
+            );
+        }
+
+        // Paginated response
+        $perPage = $request->input('per_page', 15);
+        $modules = $query->paginate($perPage);
 
         if ($modules->isEmpty()) {
             return $this->error('No modules found', 404);
         }
 
-        return $this->success(
-            ModuleResource::collection($modules),
-            'retrieved successfully'
+        return $this->successWithPagination(
+            ModuleResource::collection($modules->items()),
+            'retrieved successfully',
+            $modules
         );
     }
 

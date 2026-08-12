@@ -34,15 +34,45 @@ class LessonController extends Controller
             });
         });
 
-        $lessons = $query->orderBy('order')->get();
+        // Apply search filter
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('title', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        });
+
+        $query->orderBy('order');
+
+        // Handle pagination
+        $pagination = $request->input('pagination', true);
+
+        if ($pagination === false || $pagination === 'false' || $pagination === 0) {
+            $lessons = $query->get();
+
+            if ($lessons->isEmpty()) {
+                return $this->error('No lessons found', 404);
+            }
+
+            return $this->success(
+                $lessons,
+                'retrieved successfully'
+            );
+        }
+
+        // Paginated response
+        $perPage = $request->input('per_page', 15);
+        $lessons = $query->paginate($perPage);
 
         if ($lessons->isEmpty()) {
             return $this->error('No lessons found', 404);
         }
 
-        return $this->success(
-            $lessons,
-            'retrieved successfully'
+        return $this->successWithPagination(
+            $lessons->items(),
+            'retrieved successfully',
+            $lessons
         );
     }
 

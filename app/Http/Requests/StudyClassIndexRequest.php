@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use App\Traits\ApiValidationResponse;
 use Illuminate\Foundation\Http\FormRequest;
 
-class LessonIndexRequest extends FormRequest
+class StudyClassIndexRequest extends FormRequest
 {
     use ApiValidationResponse;
 
@@ -25,8 +25,6 @@ class LessonIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'module_id' => ['nullable', 'integer', 'exists:modules,id'],
-            'track_id' => ['nullable', 'integer', 'exists:tracks,id'],
             'search' => ['nullable', 'string', 'max:255'],
             'pagination' => ['nullable', 'in:true,false,1,0'],
             'page' => ['nullable', 'integer', 'min:1'],
