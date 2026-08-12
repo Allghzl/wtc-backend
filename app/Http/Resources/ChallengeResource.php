@@ -21,6 +21,7 @@ class ChallengeResource extends JsonResource
             'metadata'   => $this->metadata,
             'max_score'  => $this->max_score,
             'points'     => $this->points,
+            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];

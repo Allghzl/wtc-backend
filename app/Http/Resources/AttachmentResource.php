@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class LessonResource extends JsonResource
+class AttachmentResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,15 +16,12 @@ class LessonResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'module_id' => $this->module_id,
             'title' => $this->title,
-            'slug' => $this->slug,
             'description' => $this->description,
-            'content' => $this->content,
-            'video_url' => $this->video_url,
-            'duration' => $this->duration,
-            'order' => $this->order,
-            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
+            'type' => $this->type,
+            'file_name' => $this->file_name,
+            'mime_type' => $this->mime_type,
+            'size' => $this->size,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

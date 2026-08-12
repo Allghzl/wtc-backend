@@ -45,4 +45,9 @@ class Lesson extends Model
     {
         return $this->hasMany(Challenge::class);
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(Attachment::class);
+    }
 }

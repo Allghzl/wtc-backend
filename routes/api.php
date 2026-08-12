@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChallengeAttachmentController;
 use App\Http\Controllers\Api\ChallengeController;
+use App\Http\Controllers\Api\LessonAttachmentController;
 use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
 use App\Http\Controllers\Api\StudyClassController;
@@ -37,6 +40,19 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/submissions/{submission}',             [SubmissionController::class, 'show']);
     Route::patch('/submissions/{submission}',           [SubmissionController::class, 'update']);
     Route::get('/submissions/{submission}/file',        [SubmissionController::class, 'file']);
+
+    // Lesson Attachments
+    Route::get('/lessons/{lesson}/attachments',         [LessonAttachmentController::class, 'index']);
+    Route::post('/lessons/{lesson}/attachments',        [LessonAttachmentController::class, 'store']);
+    Route::delete('/lessons/{lesson}/attachments/{attachment}', [LessonAttachmentController::class, 'destroy']);
+
+    // Challenge Attachments
+    Route::get('/challenges/{challenge}/attachments',   [ChallengeAttachmentController::class, 'index']);
+    Route::post('/challenges/{challenge}/attachments',  [ChallengeAttachmentController::class, 'store']);
+    Route::delete('/challenges/{challenge}/attachments/{attachment}', [ChallengeAttachmentController::class, 'destroy']);
+
+    // Generic Attachment File Download
+    Route::get('/attachments/{attachment}/file',        [AttachmentController::class, 'file']);
 
     Route::apiResource('tracks', TrackController::class);
     Route::apiResource('modules', ModuleController::class);
