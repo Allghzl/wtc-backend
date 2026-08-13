@@ -18,12 +18,10 @@ class AttachmentService
         ?int $lessonId = null,
         ?int $challengeId = null
     ): Attachment {
-        // Generate unique file path
         $timestamp = now()->format('Y/m/d');
         $fileName = uniqid() . '_' . $file->getClientOriginalName();
         $filePath = "attachments/{$timestamp}/{$fileName}";
 
-        // Upload to S3
         $disk = Storage::disk('s3');
         $uploaded = $disk->put($filePath, file_get_contents($file->getRealPath()));
 
@@ -33,7 +31,6 @@ class AttachmentService
             ]);
         }
 
-        // Create attachment metadata
         $attachment = Attachment::create([
             'lesson_id' => $lessonId,
             'challenge_id' => $challengeId,

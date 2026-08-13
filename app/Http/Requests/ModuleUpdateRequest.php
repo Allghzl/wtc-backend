@@ -26,10 +26,11 @@ class ModuleUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'track_id' => ['required', 'exists:tracks,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique('modules', 'slug')->ignore($this->module)],
-            'order' => ['required', 'integer', Rule::unique('modules', 'order')->ignore($this->module)],
+            'track_id' => ['sometimes', 'required', 'exists:tracks,id'],
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('modules', 'slug')->ignore($this->module)],
+            'description' => ['nullable', 'sometimes', 'string'],
+            'order' => ['sometimes', 'nullable', 'integer', Rule::unique('modules', 'order')->ignore($this->module)],
         ];
     }
 }
