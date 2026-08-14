@@ -31,6 +31,7 @@ class ModuleStoreRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:modules,slug'],
             'description' => ['nullable', 'string'],
+            'metadata' => ['nullable', 'array'],
             'order' => [
                 'nullable',
                 'integer',

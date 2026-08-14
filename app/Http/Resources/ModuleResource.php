@@ -20,6 +20,7 @@ class ModuleResource extends JsonResource
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
+            'metadata' => $this->metadata,
             'order' => $this->order,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
