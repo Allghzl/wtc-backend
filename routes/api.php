@@ -61,6 +61,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::apiResource('study-classes', StudyClassController::class);
 
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/me/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::delete('/me/avatar', [AuthController::class, 'deleteAvatar']);
 });
 
 

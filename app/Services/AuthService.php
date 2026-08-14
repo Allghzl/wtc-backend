@@ -13,6 +13,7 @@ class AuthService
 {
     public function __construct(
         protected ProfileService $profiles,
+        protected AvatarService $avatars,
     ) {}
 
     /**
@@ -124,15 +125,6 @@ class AuthService
                     'name' => $payload->name ?? null,
                     'email' => $payload->email ?? null,
                     'provider' => 'pinat',
-
-                    /*
-                     * Gunakan URL avatar dari PinatAuth.
-                     *
-                     * Jangan fallback ke avatar_key kalau
-                     * targetnya memang ingin menyimpan URL.
-                     */
-                    'avatar' => $payload->avatar_url ?? null,
-
                     'email_verified_at' => now(),
                 ]
             );
@@ -152,6 +144,22 @@ class AuthService
                     'last_login_at' => now(),
                     'last_synced_at' => now(),
                 ]);
+            }
+
+            /*
+             * Download & save OAuth avatar permanent.
+             *
+             * Hanya dilakukan kalau:
+             * - User belum punya avatar
+             * - Payload punya avatar_url
+             *
+             * Silent fail kalau download gagal.
+             */
+            if (!$user->avatar && isset($payload->avatar_url)) {
+                $this->avatars->downloadOAuthAvatar(
+                    $user,
+                    $payload->avatar_url
+                );
             }
 
             $profile->load('roles');

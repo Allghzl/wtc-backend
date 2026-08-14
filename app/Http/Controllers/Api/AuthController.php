@@ -22,6 +22,7 @@ class AuthController extends Controller
     public function __construct(
         protected AuthService $auth,
         protected PinatJwtService $pinatJwt,
+        protected \App\Services\AvatarService $avatars,
     ) {}
 
     /**
@@ -181,5 +182,58 @@ class AuthController extends Controller
             'user' => new UserResource($user),
             'profile' => new ProfileResource($user->profile),
         ]);
+    }
+
+    /**
+     * Upload avatar untuk user.
+     */
+    public function uploadAvatar(\App\Http\Requests\AvatarUploadRequest $request)
+    {
+        try {
+            $user = $request->user();
+
+            $this->avatars->uploadAvatar(
+                $user,
+                $request->file('avatar')
+            );
+
+            // Reload user untuk ambil avatar yang baru
+            $user->refresh();
+
+            return $this->success(
+                new UserResource($user),
+                'Avatar uploaded successfully.'
+            );
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->error(
+                $e->getMessage(),
+                422
+            );
+        }
+    }
+
+    /**
+     * Delete avatar user.
+     */
+    public function deleteAvatar(Request $request)
+    {
+        $user = $request->user();
+
+        $deleted = $this->avatars->deleteAvatar($user);
+
+        if (!$deleted) {
+            return $this->error(
+                'Avatar not found or already deleted.',
+                404
+            );
+        }
+
+        // Reload user
+        $user->refresh();
+
+        return $this->success(
+            new UserResource($user),
+            'Avatar deleted successfully.'
+        );
     }
 }
