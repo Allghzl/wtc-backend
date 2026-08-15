@@ -7,9 +7,13 @@ use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\LessonAttachmentController;
 use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
+
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\StudyClassController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\TrackController;
+use App\Http\Controllers\Api\UserController;
 use App\Services\PinatJwtService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -61,8 +65,35 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::apiResource('study-classes', StudyClassController::class);
 
     Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/me/avatar', [AuthController::class, 'uploadAvatar']);
-    Route::delete('/me/avatar', [AuthController::class, 'deleteAvatar']);
+
+    // Profile Management
+    Route::get('/profiles/{profile}', [ProfileController::class, 'show']);
+    Route::put('/profiles/{profile}', [ProfileController::class, 'update']);
+
+    // Avatar Management
+    Route::post('/profiles/{profile}/avatar', [ProfileController::class, 'uploadAvatar']);
+    Route::delete('/profiles/{profile}/avatar', [ProfileController::class, 'deleteAvatar']);
+
+    // Role Management
+    Route::get('/profiles/{profile}/roles', [ProfileController::class, 'getRoles']);
+    Route::post('/profiles/{profile}/roles', [ProfileController::class, 'assignRole']);
+    Route::delete('/profiles/{profile}/roles/{role}', [ProfileController::class, 'removeRole']);
+
+    // User Management
+    Route::get('/users/stats', [UserController::class, 'stats']);
+    Route::get('/users', [UserController::class, 'index']);
+    Route::get('/users/{user}', [UserController::class, 'show']);
+
+    // Role CRUD
+    Route::get('/roles', [RoleController::class, 'index']);
+    Route::get('/roles/{role}', [RoleController::class, 'show']);
+
+    // Admin-only role operations
+    Route::middleware('admin')->group(function () {
+        Route::post('/roles', [RoleController::class, 'store']);
+        Route::put('/roles/{role}', [RoleController::class, 'update']);
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+    });
 });
 
 
