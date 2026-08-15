@@ -64,11 +64,6 @@ class User extends Authenticatable
         return $this->hasMany(Session::class);
     }
 
-    public function submissions()
-    {
-        return $this->hasMany(Submission::class);
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Helpers

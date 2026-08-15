@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChallengeAttachmentController;
 use App\Http\Controllers\Api\ChallengeController;
+use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\LessonAttachmentController;
 use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
@@ -57,6 +58,16 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     // Generic Attachment File Download
     Route::get('/attachments/{attachment}/file',        [AttachmentController::class, 'file']);
+
+    // Track Enrollment
+    Route::post('/tracks/{track}/enroll',               [EnrollmentController::class, 'enroll']);
+    Route::delete('/tracks/{track}/enroll',             [EnrollmentController::class, 'unenroll']);
+    Route::get('/tracks/{track}/enrollment',            [EnrollmentController::class, 'getEnrollment']);
+
+    // My Tracks & Progress
+    Route::get('/my/tracks',                            [EnrollmentController::class, 'myTracks']);
+    Route::get('/my/progress',                          [EnrollmentController::class, 'myProgress']);
+    Route::get('/my/tracks/{track}/progress',           [EnrollmentController::class, 'trackProgress']);
 
     Route::apiResource('tracks', TrackController::class);
     Route::apiResource('modules', ModuleController::class);
