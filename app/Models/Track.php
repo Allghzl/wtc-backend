@@ -38,4 +38,36 @@ class Track extends Model
     {
         return $this->hasMany(Module::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enrollment Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function enrollments()
+    {
+        return $this->hasMany(TrackEnrollment::class);
+    }
+
+    public function enrolledProfiles()
+    {
+        return $this->belongsToMany(
+            Profile::class,
+            'track_enrollments'
+        )
+            ->withPivot([
+                'status',
+                'enrolled_at',
+                'completed_at',
+                'dropped_at',
+            ])
+            ->withTimestamps();
+    }
+
+    public function activeEnrollments()
+    {
+        return $this->enrollments()
+            ->where('status', 'active');
+    }
 }

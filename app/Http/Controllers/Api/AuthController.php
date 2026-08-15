@@ -22,6 +22,7 @@ class AuthController extends Controller
     public function __construct(
         protected AuthService $auth,
         protected PinatJwtService $pinatJwt,
+        protected \App\Services\AvatarService $avatars,
     ) {}
 
     /**
@@ -94,10 +95,13 @@ class AuthController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return $this->error(
-                'Invalid or expired PinatAuth token.',
-                401
-            );
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 401);
         }
     }
 

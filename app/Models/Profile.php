@@ -79,4 +79,44 @@ class Profile extends Model
             'id',
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enrollment Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function trackEnrollments(): HasMany
+    {
+        return $this->hasMany(TrackEnrollment::class);
+    }
+
+    public function enrolledTracks(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Track::class,
+            'track_enrollments'
+        )
+            ->withPivot([
+                'status',
+                'enrolled_at',
+                'completed_at',
+                'dropped_at',
+            ])
+            ->withTimestamps();
+    }
+
+    public function activeEnrollments(): HasMany
+    {
+        return $this->trackEnrollments()
+            ->where('status', 'active');
+    }
+
+    public function isEnrolledIn(Track $track): bool
+    {
+        return $this->trackEnrollments()
+            ->where('track_id', $track->id)
+            ->where('status', 'active')
+            ->exists();
+    }
 }

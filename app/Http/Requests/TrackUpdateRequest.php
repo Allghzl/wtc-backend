@@ -26,16 +26,17 @@ class TrackUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
             'slug' => [
+                'sometimes',
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('tracks', 'slug')->ignore($this->track),
             ],
-            'description' => ['nullable', 'string'],
-            'order' => ['required', 'integer', Rule::unique('tracks', 'order')->ignore($this->track)],
-            'image_url' => ['nullable', 'url', 'max:255'],
+            'description' => ['nullable', 'sometimes', 'string'],
+            'order' => ['sometimes', 'nullable', 'integer', Rule::unique('tracks', 'order')->ignore($this->track)],
+            'image_url' => ['nullable', 'sometimes', 'url', 'max:255'],
         ];
     }
 }

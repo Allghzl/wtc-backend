@@ -26,17 +26,21 @@ class LessonUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'content' => ['required', 'string'],
-            'video_url' => ['nullable', 'url'],
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('lessons', 'slug')->ignore($this->route('lesson'))],
+            'description' => ['nullable', 'sometimes', 'string'],
+            'content' => ['sometimes', 'required', 'string'],
+            'video_url' => ['nullable', 'sometimes', 'url'],
+            'duration' => ['nullable', 'sometimes', 'integer', 'min:1'],
             'order' => [
-                'required',
+                'sometimes',
+                'nullable',
                 'integer',
                 Rule::unique('lessons')
-                    ->where(fn($query) => $query->where('module_id', $this->module_id))
+                    ->where(fn($query) => $query->where('module_id', $this->module_id ?? $this->route('lesson')->module_id))
                     ->ignore($this->route('lesson')),
             ],
-            'module_id' => ['required', 'exists:modules,id']
+            'module_id' => ['sometimes', 'required', 'exists:modules,id']
         ];
     }
 }

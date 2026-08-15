@@ -27,6 +27,10 @@ class LessonIndexRequest extends FormRequest
         return [
             'module_id' => ['nullable', 'integer', 'exists:modules,id'],
             'track_id' => ['nullable', 'integer', 'exists:tracks,id'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'pagination' => ['nullable', 'in:true,false,1,0'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

@@ -34,15 +34,45 @@ class LessonController extends Controller
             });
         });
 
-        $lessons = $query->orderBy('order')->get();
+        // Apply search filter
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('title', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('content', 'like', "%{$search}%");
+            });
+        });
+
+        $query->orderBy('order');
+
+        // Handle pagination
+        $pagination = $request->input('pagination', true);
+
+        if ($pagination === false || $pagination === 'false' || $pagination === 0) {
+            $lessons = $query->get();
+
+            if ($lessons->isEmpty()) {
+                return $this->error('No lessons found', 404);
+            }
+
+            return $this->success(
+                LessonResource::collection($lessons),
+                'retrieved successfully'
+            );
+        }
+
+        // Paginated response
+        $perPage = $request->input('per_page', 15);
+        $lessons = $query->paginate($perPage);
 
         if ($lessons->isEmpty()) {
             return $this->error('No lessons found', 404);
         }
 
-        return $this->success(
-            $lessons,
-            'retrieved successfully'
+        return $this->successWithPagination(
+            LessonResource::collection($lessons->items()),
+            'retrieved successfully',
+            $lessons
         );
     }
 
@@ -58,7 +88,7 @@ class LessonController extends Controller
         }
 
         return $this->success(
-            $lessons,
+            LessonResource::collection($lessons),
             'Lessons retrieved successfully'
         );
     }
@@ -71,7 +101,7 @@ class LessonController extends Controller
         $lesson = Lesson::create($request->validated());
 
         return $this->success(
-            $lesson,
+            new LessonResource($lesson),
             'Lesson created successfully',
             201
         );
@@ -83,7 +113,7 @@ class LessonController extends Controller
     public function show(Lesson $lesson)
     {
         return $this->success(
-            $lesson,
+            new LessonResource($lesson),
             'Lesson retrieved successfully'
         );
     }
@@ -96,7 +126,7 @@ class LessonController extends Controller
         $lesson->update($request->validated());
 
         return $this->success(
-            $lesson,
+            new LessonResource($lesson),
             'Lesson updated successfully'
         );
     }

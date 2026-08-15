@@ -52,12 +52,19 @@ class SubmissionService
             ->map(function (Profile $profile) {
                 $submissions = $profile->submissions;
 
+                // Generate avatar URL
+                $avatarUrl = null;
+                if ($profile->user?->avatar) {
+                    $avatarService = app(\App\Services\AvatarService::class);
+                    $avatarUrl = $avatarService->generateAvatarUrl($profile->user);
+                }
+
                 return [
                     'profile' => [
                         'id' => $profile->id,
                         'display_name' => $profile->display_name,
                         'email' => $profile->user?->email,
-                        'avatar_key' => $profile->user?->avatar_key,
+                        'avatar' => $avatarUrl,
                     ],
 
                     'submission_count' => $submissions->count(),

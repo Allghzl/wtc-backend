@@ -11,9 +11,11 @@ class Lesson extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = [
         'title',
+        'slug',
+        'description',
         'content',
         'video_url',
-        'slug',
+        'duration',
         'order',
         'module_id'
     ];
@@ -44,5 +46,10 @@ class Lesson extends Model
     public function challenges()
     {
         return $this->hasMany(Challenge::class);
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(Attachment::class);
     }
 }

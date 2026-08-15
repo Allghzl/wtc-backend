@@ -133,7 +133,9 @@ class SubmissionController extends Controller
                         'id' => $submission->profile->id,
                         'display_name' => $submission->profile->display_name,
                         'email' => $submission->profile->user?->email,
-                        'avatar_key' => $submission->profile->user?->avatar_key,
+                        'avatar' => $submission->profile->user?->avatar
+                            ? app(\App\Services\AvatarService::class)->generateAvatarUrl($submission->profile->user)
+                            : null,
                     ],
 
                     'challenge' => [

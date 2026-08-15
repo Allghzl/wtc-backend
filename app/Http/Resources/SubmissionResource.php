@@ -26,7 +26,9 @@ class SubmissionResource extends JsonResource
             'manual_score'      => $this->manual_score,
             'total_score'       => ($this->auto_score ?? 0) + ($this->manual_score ?? 0),
             'feedback'          => $this->feedback,
-            'submitted_at'      => $this->created_at->format('Y-m-d H:i:s'),
+            'submitted_at'      => $this->submitted_at ? $this->submitted_at->format('Y-m-d H:i:s') : null,
+            'created_at'        => $this->created_at->format('Y-m-d H:i:s'),
+            'updated_at'        => $this->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 }

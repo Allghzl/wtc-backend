@@ -12,9 +12,8 @@ class StudyClass extends Model
 
     protected $fillable = ['name'];
 
-    public function users()
+    public function profiles()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Profile::class);
     }
-    //
 }

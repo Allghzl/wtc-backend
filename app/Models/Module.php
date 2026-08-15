@@ -14,9 +14,17 @@ class Module extends Model
         'title',
         'slug',
         'description',
+        'metadata',
         'order',
         'track_id'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'metadata' => 'array',
+        ];
+    }
 
     // ========================================
     // ✨ TAMBAHIN INI - Auto-populate order

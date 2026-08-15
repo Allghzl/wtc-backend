@@ -77,7 +77,7 @@ class ProcessSubmissionAction
                     . '.' . $file->getClientOriginalExtension();
 
                 $filePath = Storage::disk('s3')->putFileAs(
-                    "{$profile->id}/submissions",
+                    "profiles/{$profile->id}/submissions",
                     $file,
                     $filename
                 );

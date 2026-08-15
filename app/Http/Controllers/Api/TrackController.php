@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TrackIndexRequest;
 use App\Http\Requests\TrackStoreRequest;
 use App\Http\Requests\TrackUpdateRequest;
 use App\Http\Resources\TrackResource;
@@ -16,17 +17,49 @@ class TrackController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(TrackIndexRequest $request)
     {
-        $tracks = Track::withCount(['modules'])->orderBy('order')->get();
+        $query = Track::withCount(['modules']);
+
+        // Apply search filter
+        $query->when($request->input('search'), function ($q, $search) {
+            $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('title', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        });
+
+        $query->orderBy('order');
+
+        // Handle pagination
+        $pagination = $request->input('pagination', true);
+
+        if ($pagination === false || $pagination === 'false' || $pagination === 0) {
+            $tracks = $query->get();
+
+            if ($tracks->isEmpty()) {
+                return $this->error('No tracks found', 404);
+            }
+
+            return $this->success(
+                TrackResource::collection($tracks),
+                'retrieved successfully'
+            );
+        }
+
+        // Paginated response
+        $perPage = $request->input('per_page', 15);
+        $tracks = $query->paginate($perPage);
 
         if ($tracks->isEmpty()) {
             return $this->error('No tracks found', 404);
         }
 
-        return $this->success(
-            TrackResource::collection($tracks),
-            'retrieved successfully'
+        return $this->successWithPagination(
+            TrackResource::collection($tracks->items()),
+            'retrieved successfully',
+            $tracks
         );
     }
 

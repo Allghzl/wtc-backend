@@ -24,6 +24,7 @@ class LessonResource extends JsonResource
             'video_url' => $this->video_url,
             'duration' => $this->duration,
             'order' => $this->order,
+            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
