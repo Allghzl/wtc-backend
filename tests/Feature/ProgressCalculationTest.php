@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Challenge;
 use App\Models\Lesson;
+use App\Models\LessonCompletion;
 use App\Models\Module;
 use App\Models\Profile;
 use App\Models\Submission;
 use App\Models\Track;
 use App\Models\TrackEnrollment;
 use App\Models\User;
+use App\Services\LessonCompletionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -119,7 +121,7 @@ class ProgressCalculationTest extends TestCase
         $module = Module::factory()->create(['track_id' => $track->id]);
         $lesson = Lesson::factory()->create(['module_id' => $module->id]);
 
-        // Create 4 challenges
+        // Create 4 challenges in the lesson
         $challenge1 = Challenge::factory()->create(['lesson_id' => $lesson->id]);
         $challenge2 = Challenge::factory()->create(['lesson_id' => $lesson->id]);
         $challenge3 = Challenge::factory()->create(['lesson_id' => $lesson->id]);
@@ -140,13 +142,40 @@ class ProgressCalculationTest extends TestCase
         $response = $this->actingAs($this->user)
             ->getJson("/api/my/tracks/{$track->slug}/progress");
 
+        // CORRECTED EXPECTATION: Lesson with challenges = ONE progress item
+        // Lesson is NOT complete until ALL challenges are done
+        // So 2 of 4 challenges = 0% (lesson not complete)
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
                 'data' => [
                     'progress' => [
-                        'percent' => 50,
-                        'completed_challenges' => 2,
+                        'percent' => 0, // 0 of 1 lesson complete
+                        'completed_lessons' => 0,
+                        'total_lessons' => 1,
+                        'completed_challenges' => 2, // Informational metric
+                        'total_challenges' => 4, // Informational metric
+                    ],
+                ],
+            ]);
+
+        // Now complete the remaining 2 challenges
+        $this->createSubmission($challenge3, $this->profile, 'graded');
+        $this->createSubmission($challenge4, $this->profile, 'reviewed');
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/my/tracks/{$track->slug}/progress");
+
+        // Now the lesson is complete (all 4 challenges done)
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'progress' => [
+                        'percent' => 100, // 1 of 1 lesson complete
+                        'completed_lessons' => 1,
+                        'total_lessons' => 1,
+                        'completed_challenges' => 4,
                         'total_challenges' => 4,
                     ],
                 ],
@@ -154,7 +183,7 @@ class ProgressCalculationTest extends TestCase
     }
 
     /** @test */
-    public function test_lesson_with_zero_challenges_does_not_affect_progress(): void
+    public function test_lesson_without_challenges_is_counted_in_progress(): void
     {
         $track = Track::factory()->create();
         $module = Module::factory()->create(['track_id' => $track->id]);
@@ -176,7 +205,7 @@ class ProgressCalculationTest extends TestCase
             'enrolled_at' => now(),
         ]);
 
-        // Don't complete the challenge yet
+        // Check initial progress - lesson without challenges now counts
         $response = $this->actingAs($this->user)
             ->getJson("/api/my/tracks/{$track->slug}/progress");
 
@@ -185,27 +214,32 @@ class ProgressCalculationTest extends TestCase
                 'success' => true,
                 'data' => [
                     'progress' => [
-                        'total_challenges' => 1, // Only the direct module challenge
+                        'total_lessons' => 1,
+                        'total_challenges' => 1,
+                        'completed_lessons' => 0,
                         'completed_challenges' => 0,
                         'percent' => 0,
                     ],
                 ],
             ]);
 
-        // Now complete the challenge
+        // Complete the challenge only
         $this->createSubmission($challenge, $this->profile, 'graded');
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/my/tracks/{$track->slug}/progress");
 
+        // Only 1 of 2 items complete (challenge done, lesson not)
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
                 'data' => [
                     'progress' => [
+                        'total_lessons' => 1,
                         'total_challenges' => 1,
+                        'completed_lessons' => 0,
                         'completed_challenges' => 1,
-                        'percent' => 100,
+                        'percent' => 50, // 1 of 2 items
                     ],
                 ],
             ]);
@@ -542,5 +576,271 @@ class ProgressCalculationTest extends TestCase
                     ],
                 ],
             ]);
+    }
+
+    /** @test */
+    public function lesson_without_challenges_counts_in_total_lessons()
+    {
+        $lesson = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+
+        $this->assertEquals(0, $progress['completed_lessons']);
+        $this->assertEquals(1, $progress['total_lessons']);
+        $this->assertEquals(0, $progress['completed_challenges']);
+        $this->assertEquals(0, $progress['total_challenges']);
+    }
+
+    /** @test */
+    public function explicit_lesson_completion_increases_completed_lessons()
+    {
+        $lessonCompletionService = app(LessonCompletionService::class);
+
+        $lesson = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]);
+
+        $lessonCompletionService->markAsComplete($lesson, $this->profile);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+
+        $this->assertEquals(1, $progress['completed_lessons']);
+        $this->assertEquals(1, $progress['total_lessons']);
+        $this->assertEquals(100, $progress['percent']);
+    }
+
+    /** @test */
+    public function module_progress_includes_both_lessons_and_challenges()
+    {
+        $lessonCompletionService = app(LessonCompletionService::class);
+
+        // Lesson without challenges
+        $lesson1 = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]);
+
+        // Lesson with challenge
+        $lesson2 = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 2,
+        ]);
+        $challenge = Challenge::factory()->create([
+            'lesson_id' => $lesson2->id,
+            'order' => 1,
+        ]);
+
+        // Total: 2 lessons + 1 challenge = 3 items
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(0, $progress['percent']);
+        $this->assertEquals(0, $progress['completed_lessons']);
+        $this->assertEquals(2, $progress['total_lessons']);
+        $this->assertEquals(0, $progress['completed_challenges']);
+        $this->assertEquals(1, $progress['total_challenges']);
+
+        // Complete lesson1 (explicit)
+        $lessonCompletionService->markAsComplete($lesson1, $this->profile);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(33, $progress['percent']); // 1 of 3
+        $this->assertEquals(1, $progress['completed_lessons']);
+
+        // Complete challenge
+        Submission::factory()->create([
+            'challenge_id' => $challenge->id,
+            'profile_id' => $this->profile->id,
+            'status' => 'graded',
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(100, $progress['percent']); // 3 of 3 (lesson1 + lesson2 + challenge)
+        $this->assertEquals(2, $progress['completed_lessons']);
+        $this->assertEquals(1, $progress['completed_challenges']);
+    }
+
+    /** @test */
+    public function track_progress_aggregates_lessons_and_challenges()
+    {
+        $lessonCompletionService = app(LessonCompletionService::class);
+
+        $module2 = Module::factory()->create([
+            'track_id' => $this->track->id,
+            'order' => 2,
+        ]);
+
+        // Module 1: 1 lesson without challenges
+        $lesson1 = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]);
+
+        // Module 2: 1 lesson with challenge
+        $lesson2 = Lesson::factory()->create([
+            'module_id' => $module2->id,
+            'order' => 1,
+        ]);
+        $challenge = Challenge::factory()->create([
+            'lesson_id' => $lesson2->id,
+            'order' => 1,
+        ]);
+
+        $progress = $this->progressService->getTrackProgress($this->track, $this->profile);
+        $this->assertEquals(2, $progress['total_lessons']);
+        $this->assertEquals(1, $progress['total_challenges']);
+        $this->assertEquals(0, $progress['completed_lessons']);
+        $this->assertEquals(0, $progress['completed_challenges']);
+
+        // Complete lesson1
+        $lessonCompletionService->markAsComplete($lesson1, $this->profile);
+
+        $progress = $this->progressService->getTrackProgress($this->track, $this->profile);
+        $this->assertEquals(1, $progress['completed_lessons']);
+        $this->assertEquals(33, $progress['percent']); // 1 of 3 items
+    }
+
+    /** @test */
+    public function lesson_with_challenges_derives_completion_from_challenges()
+    {
+        $lesson = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]);
+
+        $challenge1 = Challenge::factory()->create([
+            'lesson_id' => $lesson->id,
+            'order' => 1,
+        ]);
+        $challenge2 = Challenge::factory()->create([
+            'lesson_id' => $lesson->id,
+            'order' => 2,
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(0, $progress['completed_lessons']);
+        $this->assertEquals(1, $progress['total_lessons']);
+        $this->assertEquals(2, $progress['total_challenges']);
+
+        // Complete first challenge only
+        Submission::factory()->create([
+            'challenge_id' => $challenge1->id,
+            'profile_id' => $this->profile->id,
+            'status' => 'graded',
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(0, $progress['completed_lessons']); // Lesson not complete yet
+        $this->assertEquals(1, $progress['completed_challenges']);
+        $this->assertEquals(33, $progress['percent']); // 1 of 3
+
+        // Complete second challenge
+        Submission::factory()->create([
+            'challenge_id' => $challenge2->id,
+            'profile_id' => $this->profile->id,
+            'status' => 'reviewed',
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(1, $progress['completed_lessons']); // Now lesson is complete
+        $this->assertEquals(2, $progress['completed_challenges']);
+        $this->assertEquals(100, $progress['percent']); // All complete
+    }
+
+    /** @test */
+    public function module_with_direct_challenges_and_lessons_calculates_correctly()
+    {
+        $lessonCompletionService = app(LessonCompletionService::class);
+
+        // Lesson without challenges
+        $lesson = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]);
+
+        // Direct module challenge (not in a lesson)
+        $directChallenge = Challenge::factory()->create([
+            'module_id' => $this->module->id,
+            'lesson_id' => null,
+            'order' => 1,
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(1, $progress['total_lessons']);
+        $this->assertEquals(1, $progress['total_challenges']);
+        $this->assertEquals(0, $progress['percent']);
+
+        // Complete lesson
+        $lessonCompletionService->markAsComplete($lesson, $this->profile);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(50, $progress['percent']); // 1 of 2
+
+        // Complete direct challenge
+        Submission::factory()->create([
+            'challenge_id' => $directChallenge->id,
+            'profile_id' => $this->profile->id,
+            'status' => 'graded',
+        ]);
+
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(100, $progress['percent']); // 2 of 2
+    }
+
+    /** @test */
+    public function critical_regression_progress_formula_does_not_double_count_lesson_challenges()
+    {
+        // CRITICAL TEST: Verify lessons with challenges are counted as ONE item, not N items
+        // This test confirms the fix for the double-counting bug
+
+        $lessonCompletionService = app(LessonCompletionService::class);
+
+        // Create 3 lessons as specified in task
+        $lessonA = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 1,
+        ]); // 0 challenges
+
+        $lessonB = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 2,
+        ]); // Will have 3 challenges
+
+        $lessonC = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'order' => 3,
+        ]); // Will have 1 challenge
+
+        // Add challenges to lesson B
+        Challenge::factory()->create(['lesson_id' => $lessonB->id, 'order' => 1]);
+        Challenge::factory()->create(['lesson_id' => $lessonB->id, 'order' => 2]);
+        Challenge::factory()->create(['lesson_id' => $lessonB->id, 'order' => 3]);
+
+        // Add challenge to lesson C
+        Challenge::factory()->create(['lesson_id' => $lessonC->id, 'order' => 1]);
+
+        // Initial state: 3 lessons, 0 completed
+        // Total items = 3 (NOT 7: 3 lessons + 4 challenges)
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(3, $progress['total_lessons']);
+        $this->assertEquals(4, $progress['total_challenges']); // Informational metric
+        $this->assertEquals(0, $progress['completed_lessons']);
+        $this->assertEquals(0, $progress['percent']);
+
+        // Complete lesson A (explicit completion since no challenges)
+        $lessonCompletionService->markAsComplete($lessonA, $this->profile);
+
+        // After completing lesson A: 1 of 3 = 33%
+        // NOT 1 of 7 (which would be the bug behavior)
+        $progress = $this->progressService->getModuleProgress($this->module, $this->profile);
+        $this->assertEquals(1, $progress['completed_lessons']);
+        $this->assertEquals(3, $progress['total_lessons']);
+        $this->assertEquals(33, $progress['percent']); // CRITICAL: Must be 33%, not ~14%
+
+        // Verify total_challenges is still tracked (informational)
+        $this->assertEquals(4, $progress['total_challenges']);
+        $this->assertEquals(0, $progress['completed_challenges']);
     }
 }

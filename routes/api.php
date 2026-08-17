@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ChallengeAttachmentController;
 use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\LessonAttachmentController;
+use App\Http\Controllers\Api\LessonCompletionController;
 use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
 
@@ -46,6 +47,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::patch('/submissions/{submission}',           [SubmissionController::class, 'update']);
     Route::get('/submissions/{submission}/file',        [SubmissionController::class, 'file']);
 
+    // Lesson Completion
+    Route::post('/lessons/{lesson}/complete',           [LessonCompletionController::class, 'complete']);
+
     // Lesson Attachments
     Route::get('/lessons/{lesson}/attachments',         [LessonAttachmentController::class, 'index']);
     Route::post('/lessons/{lesson}/attachments',        [LessonAttachmentController::class, 'store']);
@@ -68,6 +72,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/my/tracks',                            [EnrollmentController::class, 'myTracks']);
     Route::get('/my/progress',                          [EnrollmentController::class, 'myProgress']);
     Route::get('/my/tracks/{track}/progress',           [EnrollmentController::class, 'trackProgress']);
+    Route::get('/my/tracks/{track}/overview',           [EnrollmentController::class, 'trackOverview']);
+    Route::get('/my/dashboard',                         [EnrollmentController::class, 'dashboard']);
 
     Route::apiResource('tracks', TrackController::class);
     Route::apiResource('modules', ModuleController::class);

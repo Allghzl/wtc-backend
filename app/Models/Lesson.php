@@ -52,4 +52,25 @@ class Lesson extends Model
     {
         return $this->hasMany(Attachment::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Completion Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function completions()
+    {
+        return $this->hasMany(LessonCompletion::class);
+    }
+
+    public function completedBy()
+    {
+        return $this->belongsToMany(
+            Profile::class,
+            'lesson_completions'
+        )
+            ->withPivot('completed_at')
+            ->withTimestamps();
+    }
 }

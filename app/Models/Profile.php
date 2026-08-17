@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Profile extends Model
 {
-    use SoftDeletes, HasUuids;
+    use HasFactory, SoftDeletes, HasUuids;
 
     protected $keyType = 'string';
 
@@ -118,5 +119,26 @@ class Profile extends Model
             ->where('track_id', $track->id)
             ->where('status', 'active')
             ->exists();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lesson Completion Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function lessonCompletions(): HasMany
+    {
+        return $this->hasMany(LessonCompletion::class);
+    }
+
+    public function completedLessons(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Lesson::class,
+            'lesson_completions'
+        )
+            ->withPivot('completed_at')
+            ->withTimestamps();
     }
 }
