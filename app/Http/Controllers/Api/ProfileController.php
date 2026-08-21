@@ -25,6 +25,87 @@ class ProfileController extends Controller
     ) {}
 
     /**
+     * Display a paginated listing of profiles with search, filter, and sort capabilities.
+     *
+     * Query Parameters:
+     * - page: Page number (default: 1)
+     * - per_page: Items per page (default: 15, max: 100)
+     * - search: Search by user name or email
+     * - role: Filter by role name or role ID
+     * - study_class_id: Filter by study class
+     * - sort_by: Sort field (display_name, created_at, last_login_at)
+     * - sort_order: Sort direction (asc, desc)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request)
+    {
+        $perPage = min($request->input('per_page', 15), 100);
+        $search = $request->input('search');
+        $roleFilter = $request->input('role');
+        $studyClassFilter = $request->input('study_class_id');
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        // Validate sort field
+        $allowedSortFields = ['display_name', 'created_at', 'last_login_at', 'points'];
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'created_at';
+        }
+
+        // Validate sort order
+        if (!in_array($sortOrder, ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        $query = Profile::with(['user', 'roles', 'studyClass']);
+
+        // Search by user name or email
+        if ($search) {
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by role
+        if ($roleFilter) {
+            $query->whereHas('roles', function ($q) use ($roleFilter) {
+                // Support both role ID and role name
+                if (is_numeric($roleFilter)) {
+                    $q->where('roles.id', $roleFilter);
+                } else {
+                    $q->where('roles.name', $roleFilter);
+                }
+            });
+        }
+
+        // Filter by study class
+        if ($studyClassFilter) {
+            $query->where('study_class_id', $studyClassFilter);
+        }
+
+        // Apply sorting
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Paginate results
+        $profiles = $query->paginate($perPage);
+
+        return $this->success([
+            'profiles' => ProfileResource::collection($profiles->items()),
+            'pagination' => [
+                'current_page' => $profiles->currentPage(),
+                'per_page' => $profiles->perPage(),
+                'total' => $profiles->total(),
+                'last_page' => $profiles->lastPage(),
+                'from' => $profiles->firstItem(),
+                'to' => $profiles->lastItem(),
+            ],
+        ], 'Profiles retrieved successfully.');
+    }
+
+    /**
      * Display the specified profile with relationships.
      *
      * @param Profile $profile

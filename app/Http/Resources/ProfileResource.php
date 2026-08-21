@@ -25,7 +25,10 @@ class ProfileResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'deleted_at' => $this->deleted_at?->toISOString(),
+            'user' => new UserResource($this->whenLoaded('user')),
+            'study_class' => $this->whenLoaded('studyClass'),
             'roles' => RoleResource::collection($this->whenLoaded('roles')),
+            'achievements' => $this->whenLoaded('achievements'),
         ];
     }
 }
