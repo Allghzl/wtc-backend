@@ -20,7 +20,7 @@ class LessonController extends Controller
      */
     public function index(LessonIndexRequest $request)
     {
-        $query = Lesson::query();
+        $query = Lesson::with('attachments');
 
         // Filter by module_id if provided
         $query->when($request->input('module_id'), function ($q, $moduleId) {
@@ -81,7 +81,7 @@ class LessonController extends Controller
      */
     public function getByModule(Module $module)
     {
-        $lessons = $module->lessons()->orderBy('order')->get();
+        $lessons = $module->lessons()->with('attachments')->orderBy('order')->get();
 
         if ($lessons->isEmpty()) {
             return $this->error('No lessons found in this track', 404);
@@ -112,6 +112,8 @@ class LessonController extends Controller
      */
     public function show(Lesson $lesson)
     {
+        $lesson->load('attachments');
+
         return $this->success(
             new LessonResource($lesson),
             'Lesson retrieved successfully'
