@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Models\Challenge;
 use App\Models\Submission;
 use App\Models\User;
+use App\Services\AutoGradingService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -13,6 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class ProcessSubmissionAction
 {
+    public function __construct(
+        protected AutoGradingService $autoGradingService
+    ) {}
+
     public function execute(
         User $user,
         Challenge $challenge,
@@ -95,7 +100,7 @@ class ProcessSubmissionAction
             |--------------------------------------------------------------------------
             */
 
-            return Submission::create([
+            $submission = Submission::create([
                 'challenge_id' => $challenge->id,
                 'profile_id' => $profile->id,
                 'attempt_number' => $attemptNumber,
@@ -104,6 +109,23 @@ class ProcessSubmissionAction
                 'submitted_content' => $data['submitted_content'] ?? null,
                 'file_path' => $filePath,
             ]);
+
+            // Auto-grade if challenge type supports it
+            if ($this->autoGradingService->supportsAutoGrading($challenge->type)) {
+                $gradingResult = $this->autoGradingService->autoGrade($submission);
+
+                // Update submission with auto-grading result
+                $submission->update([
+                    'auto_score' => $gradingResult['score'],
+                    'status' => $gradingResult['status'],
+                    'feedback' => $gradingResult['feedback'],
+                ]);
+
+                // Refresh submission to get updated values
+                $submission->refresh();
+            }
+
+            return $submission;
         });
     }
 }
