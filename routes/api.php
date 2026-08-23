@@ -62,6 +62,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     // Generic Attachment File Download
     Route::get('/attachments/{attachment}/file',        [AttachmentController::class, 'file']);
+    Route::get('/attachments/{attachment}/download',    [AttachmentController::class, 'download']);
 
     // Track Enrollment
     Route::post('/tracks/{track}/enroll',               [EnrollmentController::class, 'enroll']);

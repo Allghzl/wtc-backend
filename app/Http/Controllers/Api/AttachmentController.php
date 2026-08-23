@@ -36,4 +36,29 @@ class AttachmentController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Direct download attachment file (streams from S3 through Laravel).
+     * Alternative to the file() method for simpler frontend implementation.
+     */
+    public function download(Request $request, Attachment $attachment)
+    {
+        $user = $request->user();
+
+        // Authorization: Check if user has access to the parent resource
+        // For lesson and challenge attachments, all authenticated users can access
+        // Additional authorization can be added here if needed
+
+        $disk = \Illuminate\Support\Facades\Storage::disk('s3');
+
+        if (!$disk->exists($attachment->file_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attachment file not found in storage.',
+            ], 404);
+        }
+
+        // Stream file directly with proper download headers
+        return $disk->download($attachment->file_path, $attachment->file_name);
+    }
 }
