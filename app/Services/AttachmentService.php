@@ -23,7 +23,12 @@ class AttachmentService
         $filePath = "attachments/{$timestamp}/{$fileName}";
 
         $disk = Storage::disk('s3');
-        $uploaded = $disk->put($filePath, file_get_contents($file->getRealPath()));
+
+        // Upload with Content-Disposition header to force download (not inline view)
+        $uploaded = $disk->put($filePath, file_get_contents($file->getRealPath()), [
+            'ContentDisposition' => 'attachment; filename="' . $file->getClientOriginalName() . '"',
+            'ContentType' => $file->getMimeType(),
+        ]);
 
         if (!$uploaded) {
             throw ValidationException::withMessages([
@@ -63,7 +68,10 @@ class AttachmentService
 
         $url = $disk->temporaryUrl(
             $attachment->file_path,
-            $expiresAt
+            $expiresAt,
+            [
+                'ResponseContentDisposition' => 'attachment; filename="' . $attachment->file_name . '"',
+            ]
         );
 
         return [
