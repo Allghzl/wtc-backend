@@ -49,9 +49,10 @@ class ProcessSubmissionAction
                 ->where('challenge_id', $challenge->id)
                 ->count();
 
-            $allowedAttempts = $challenge->allowed_attempts ?? 1;
+            $allowedAttempts = $challenge->allowed_attempts;
 
-            if ($attemptCount >= $allowedAttempts) {
+            // If allowed_attempts is NULL, unlimited attempts are allowed
+            if ($allowedAttempts !== null && $attemptCount >= $allowedAttempts) {
                 throw ValidationException::withMessages([
                     'submission' => [
                         "Kamu sudah mencapai batas maksimal percobaan ({$allowedAttempts}).",

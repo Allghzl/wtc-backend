@@ -25,7 +25,7 @@ class ChallengeStoreRequest extends FormRequest
             'metadata' => $this->input('metadata') ?? [],
             'order' => $this->input('order') ?? 0,
             'points' => $this->input('points') ?? 0,
-            'allowed_attempts' => $this->input('allowed_attempts') ?? 1,
+            'allowed_attempts' => $this->input('allowed_attempts'), // NULL = unlimited attempts
         ]);
     }
 
@@ -79,7 +79,7 @@ class ChallengeStoreRequest extends FormRequest
             'type' => [
                 'required',
                 'string',
-                'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
+                'in:multiple_choice,fill_blank,essay,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
             ],
 
             'difficulty' => [
@@ -147,7 +147,7 @@ class ChallengeStoreRequest extends FormRequest
             ],
 
             'allowed_attempts' => [
-                'required',
+                'nullable',
                 'integer',
                 'min:1',
             ],
@@ -170,7 +170,7 @@ class ChallengeStoreRequest extends FormRequest
             'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
 
             'allowed_attempts.min' =>
-            'Jumlah percobaan minimal adalah 1.',
+            'Jumlah percobaan minimal adalah 1. Kosongkan untuk unlimited attempts.',
         ];
     }
 }

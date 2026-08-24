@@ -85,7 +85,7 @@ class ChallengeUpdateRequest extends FormRequest
                 'sometimes',
                 'required',
                 'string',
-                'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
+                'in:multiple_choice,fill_blank,essay,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
             ],
 
             'difficulty' => [
@@ -160,8 +160,8 @@ class ChallengeUpdateRequest extends FormRequest
             ],
 
             'allowed_attempts' => [
+                'nullable',
                 'sometimes',
-                'required',
                 'integer',
                 'min:1',
             ],
@@ -184,7 +184,7 @@ class ChallengeUpdateRequest extends FormRequest
             'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
 
             'allowed_attempts.min' =>
-            'Jumlah percobaan minimal adalah 1.',
+            'Jumlah percobaan minimal adalah 1. Kosongkan untuk unlimited attempts.',
         ];
     }
 }
