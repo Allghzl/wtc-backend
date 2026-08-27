@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Lesson extends Model
+class Lesson extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'title',
         'slug',
@@ -17,7 +20,8 @@ class Lesson extends Model
         'video_url',
         'duration',
         'order',
-        'module_id'
+        'module_id',
+        'created_by'
     ];
 
     protected static function boot()
@@ -72,5 +76,16 @@ class Lesson extends Model
         )
             ->withPivot('completed_at')
             ->withTimestamps();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creator Relationship
+    |--------------------------------------------------------------------------
+    */
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class, 'created_by');
     }
 }

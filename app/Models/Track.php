@@ -4,18 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Track extends Model
+class Track extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'title',
         'slug',
         'description',
         'order',
-        'image_url'
+        'image_url',
+        'created_by'
     ];
 
     protected static function boot()
@@ -69,5 +72,16 @@ class Track extends Model
     {
         return $this->enrollments()
             ->where('status', 'active');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creator Relationship
+    |--------------------------------------------------------------------------
+    */
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class, 'created_by');
     }
 }

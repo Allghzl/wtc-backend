@@ -107,7 +107,14 @@ class ChallengeController extends Controller
      */
     public function store(ChallengeStoreRequest $request)
     {
-        $challenge = Challenge::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $challenge = Challenge::create($data);
 
         if (!$challenge) {
             return $this->error('Failed to create challenge', 500);

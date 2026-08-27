@@ -68,7 +68,14 @@ class TrackController extends Controller
      */
     public function store(TrackStoreRequest $request)
     {
-        $track = Track::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $track = Track::create($data);
 
         if (!$track) {
             return $this->error('Failed to create track', 500);

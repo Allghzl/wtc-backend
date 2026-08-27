@@ -22,6 +22,8 @@ class ModuleResource extends JsonResource
             'description' => $this->description,
             'metadata' => $this->metadata,
             'order' => $this->order,
+            'created_by' => $this->created_by,
+            'creator' => new ProfileResource($this->whenLoaded('creator')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

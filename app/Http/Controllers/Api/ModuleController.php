@@ -91,7 +91,14 @@ class ModuleController extends Controller
      */
     public function store(ModuleStoreRequest $request)
     {
-        $module = Module::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $module = Module::create($data);
 
         if (!$module) {
             return $this->error('Failed to create module', 500);

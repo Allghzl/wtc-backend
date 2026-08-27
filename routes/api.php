@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\AttachmentController;
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChallengeAttachmentController;
 use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\EnrollmentController;
 use App\Http\Controllers\Api\LessonAttachmentController;
+use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\LessonCompletionController;
 use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
@@ -84,6 +86,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::get('/me', [AuthController::class, 'me']);
 
+    // Leaderboard
+    Route::get('/leaderboard', [LeaderboardController::class, 'index']);
+    Route::get('/profiles/{profile}/points-history', [LeaderboardController::class, 'pointsHistory']);
+
     // Profile Management
     Route::get('/profiles', [ProfileController::class, 'index']);
     Route::get('/profiles/{profile}', [ProfileController::class, 'show']);
@@ -107,11 +113,36 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/roles/{role}', [RoleController::class, 'show']);
 
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Log Endpoints
+    |--------------------------------------------------------------------------
+    | Get audit logs for specific resources and general audit logs with filters.
+    | Accessible by authenticated users.
+    */
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
+    Route::get('/tracks/{track}/audit-log', [AuditLogController::class, 'trackAuditLog']);
+    Route::get('/modules/{module}/audit-log', [AuditLogController::class, 'moduleAuditLog']);
+    Route::get('/lessons/{lesson}/audit-log', [AuditLogController::class, 'lessonAuditLog']);
+    Route::get('/challenges/{challenge}/audit-log', [AuditLogController::class, 'challengeAuditLog']);
+
     // Admin-only role operations
     Route::middleware('admin')->group(function () {
         Route::post('/roles', [RoleController::class, 'store']);
         Route::put('/roles/{role}', [RoleController::class, 'update']);
         Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin-Only Restore Endpoints
+        |--------------------------------------------------------------------------
+        | Restore soft-deleted content. Only accessible by users with admin role.
+        | Teachers cannot restore to encourage careful deletion.
+        */
+        Route::post('/admin/tracks/{id}/restore', [AuditLogController::class, 'restoreTrack']);
+        Route::post('/admin/modules/{id}/restore', [AuditLogController::class, 'restoreModule']);
+        Route::post('/admin/lessons/{id}/restore', [AuditLogController::class, 'restoreLesson']);
+        Route::post('/admin/challenges/{id}/restore', [AuditLogController::class, 'restoreChallenge']);
     });
 });
 

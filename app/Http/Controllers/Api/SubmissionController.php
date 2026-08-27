@@ -21,7 +21,8 @@ class SubmissionController extends Controller
     use ApiResponse;
 
     public function __construct(
-        protected SubmissionService $submissionService
+        protected SubmissionService $submissionService,
+        protected \App\Services\PointService $pointService
     ) {}
 
     /**
@@ -187,6 +188,18 @@ class SubmissionController extends Controller
         $totalScore =
             ($submission->auto_score ?? 0)
             + ($submission->manual_score ?? 0);
+
+        // Award points if submission is graded/reviewed
+        if (in_array($submission->status, ['graded', 'reviewed']) && $submission->profile) {
+            $challenge = $submission->challenge;
+            $this->pointService->awardSubmissionPoints(
+                $submission->profile,
+                $submission->id,
+                $totalScore,
+                $challenge->max_score ?? 100,
+                $challenge->title ?? 'Challenge'
+            );
+        }
 
         return response()->json([
             'success' => true,

@@ -16,7 +16,8 @@ class LessonCompletionController extends Controller
     use ApiResponse;
 
     public function __construct(
-        protected LessonCompletionService $lessonCompletionService
+        protected LessonCompletionService $lessonCompletionService,
+        protected \App\Services\PointService $pointService
     ) {}
 
     /**
@@ -35,6 +36,13 @@ class LessonCompletionController extends Controller
 
         // Mark lesson as complete (idempotent)
         $completion = $this->lessonCompletionService->markAsComplete($lesson, $profile);
+
+        // Award points for lesson completion (if not already awarded)
+        $pointLog = $this->pointService->awardLessonCompletionPoints(
+            $profile,
+            $lesson->id,
+            $lesson->title
+        );
 
         return $this->success(
             new LessonCompletionResource($completion),

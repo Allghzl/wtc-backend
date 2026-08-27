@@ -21,6 +21,8 @@ class TrackResource extends JsonResource
             'description' => $this->description,
             'order' => $this->order,
             'image_url' => $this->image_url,
+            'created_by' => $this->created_by,
+            'creator' => new ProfileResource($this->whenLoaded('creator')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'modules_count' => $this->modules_count ?? 0,

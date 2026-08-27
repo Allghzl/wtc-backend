@@ -98,7 +98,14 @@ class LessonController extends Controller
      */
     public function store(LessonStoreRequest $request)
     {
-        $lesson = Lesson::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $lesson = Lesson::create($data);
 
         return $this->success(
             new LessonResource($lesson),
