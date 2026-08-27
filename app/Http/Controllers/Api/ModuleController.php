@@ -20,7 +20,7 @@ class ModuleController extends Controller
      */
     public function index(ModuleIndexRequest $request)
     {
-        $query = Module::query();
+        $query = Module::with(['creator.roles', 'creator.user']);
 
         // Apply existing track_id filter
         $query->when($request->input('track_id'), function ($q, $trackId) {
@@ -116,6 +116,7 @@ class ModuleController extends Controller
      */
     public function show(Module $module)
     {
+        $module->load(['creator.roles', 'creator.user']);
         return $this->success(new ModuleResource($module));
     }
 

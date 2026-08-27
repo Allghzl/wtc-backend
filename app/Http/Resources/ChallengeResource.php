@@ -31,7 +31,7 @@ class ChallengeResource extends JsonResource
             'points'     => $this->points,
             'allowed_attempts' => $this->allowed_attempts,
             'created_by' => $this->created_by,
-            'creator' => new ProfileResource($this->whenLoaded('creator')),
+            'creator' => new CreatorResource($this->whenLoaded('creator')),
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),

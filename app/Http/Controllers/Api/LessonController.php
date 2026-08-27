@@ -20,7 +20,7 @@ class LessonController extends Controller
      */
     public function index(LessonIndexRequest $request)
     {
-        $query = Lesson::with('attachments');
+        $query = Lesson::with(['attachments', 'creator.roles', 'creator.user']);
 
         // Filter by module_id if provided
         $query->when($request->input('module_id'), function ($q, $moduleId) {
@@ -119,7 +119,7 @@ class LessonController extends Controller
      */
     public function show(Lesson $lesson)
     {
-        $lesson->load('attachments');
+        $lesson->load(['attachments', 'creator.roles', 'creator.user']);
 
         return $this->success(
             new LessonResource($lesson),

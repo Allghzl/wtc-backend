@@ -19,7 +19,7 @@ class TrackController extends Controller
      */
     public function index(TrackIndexRequest $request)
     {
-        $query = Track::withCount(['modules']);
+        $query = Track::with(['creator.roles', 'creator.user'])->withCount(['modules']);
 
         // Apply search filter
         $query->when($request->input('search'), function ($q, $search) {
@@ -93,6 +93,7 @@ class TrackController extends Controller
      */
     public function show(Track $track)
     {
+        $track->load(['creator.roles', 'creator.user']);
         $track->loadCount('modules');
 
         return $this->success(new TrackResource($track));

@@ -25,7 +25,7 @@ class LessonResource extends JsonResource
             'duration' => $this->duration,
             'order' => $this->order,
             'created_by' => $this->created_by,
-            'creator' => new ProfileResource($this->whenLoaded('creator')),
+            'creator' => new CreatorResource($this->whenLoaded('creator')),
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

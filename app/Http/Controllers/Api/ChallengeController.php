@@ -20,7 +20,7 @@ class ChallengeController extends Controller
      */
     public function index(ChallengeIndexRequest $request)
     {
-        $query = Challenge::query();
+        $query = Challenge::with(['creator.roles', 'creator.user']);
 
         // Filter by module_id if provided (challenges directly under a module, not under a lesson)
         $query->when($request->input('module_id'), function ($q, $moduleId) {
@@ -128,6 +128,7 @@ class ChallengeController extends Controller
      */
     public function show(Challenge $challenge)
     {
+        $challenge->load(['creator.roles', 'creator.user']);
         return $this->success(new ChallengeResource($challenge), 'Challenge detail retrieved successfully');
     }
 
