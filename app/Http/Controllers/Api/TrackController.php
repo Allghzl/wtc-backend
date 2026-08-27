@@ -86,6 +86,8 @@ class TrackController extends Controller
      */
     public function show(Track $track)
     {
+        $track->loadCount('modules');
+
         return $this->success(new TrackResource($track));
     }
 
