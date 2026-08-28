@@ -81,6 +81,8 @@ class TrackController extends Controller
             return $this->error('Failed to create track', 500);
         }
 
+        $track->load(['creator.roles', 'creator.user']);
+
         return $this->success(
             new TrackResource($track),
             'Track created successfully',
@@ -105,6 +107,7 @@ class TrackController extends Controller
     public function update(TrackUpdateRequest $request, Track $track)
     {
         $track->update($request->validated());
+        $track->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new TrackResource($track),

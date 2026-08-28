@@ -22,9 +22,14 @@ class AuditLogResource extends JsonResource
             'profile' => $this->when(
                 $this->relationLoaded('user') && $this->user?->profile,
                 function () {
+                    $user = $this->user;
+
                     return [
-                        'id' => $this->user->profile->id,
-                        'display_name' => $this->user->profile->display_name,
+                        'display_name' => $user->profile->display_name,
+                        'roles' => $user->profile->roles->pluck('name')->values(),
+                        'avatar' => $user->avatar
+                            ? app(\App\Services\AvatarService::class)->generateAvatarUrl($user)
+                            : null,
                     ];
                 }
             ),

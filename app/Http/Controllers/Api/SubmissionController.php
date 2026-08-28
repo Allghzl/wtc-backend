@@ -170,16 +170,6 @@ class SubmissionController extends Controller
         SubmissionUpdateRequest $request,
         Submission $submission
     ): JsonResponse {
-        $user = $request->user();
-
-        // Authorization: Only admins and teachers can grade submissions
-        if (!($user->hasRole('admin') || $user->hasRole('teacher'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to update this submission.',
-            ], 403);
-        }
-
         $submission = $this->submissionService->updateSubmission(
             $submission,
             $request->validated()

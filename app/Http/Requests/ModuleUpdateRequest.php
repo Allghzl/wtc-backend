@@ -15,7 +15,7 @@ class ModuleUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        return $this->user()?->hasRole('admin') || $this->user()?->hasRole('teacher');
     }
 
     /**
