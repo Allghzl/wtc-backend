@@ -149,9 +149,24 @@ class AuditLogController extends Controller
      */
     public function index(Request $request)
     {
+        $request->validate([
+            'auditable_type' => ['nullable', 'in:' . implode(',', [
+                Track::class,
+                Module::class,
+                Lesson::class,
+                Challenge::class,
+            ])],
+        ]);
+
         $perPage = min($request->input('per_page', 15), 100);
 
-        $query = Audit::with('user.profile');
+        $query = Audit::with('user.profile.roles')
+            ->whereIn('auditable_type', [
+                Track::class,
+                Module::class,
+                Lesson::class,
+                Challenge::class,
+            ]);
 
         // Filter by auditable type
         if ($request->filled('auditable_type')) {

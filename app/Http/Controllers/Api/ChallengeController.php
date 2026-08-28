@@ -120,6 +120,8 @@ class ChallengeController extends Controller
             return $this->error('Failed to create challenge', 500);
         }
 
+        $challenge->load(['creator.roles', 'creator.user']);
+
         return $this->success(new ChallengeResource($challenge), 'New challenge created successfully', 201);
     }
 
@@ -138,6 +140,7 @@ class ChallengeController extends Controller
     public function update(ChallengeUpdateRequest $request, Challenge $challenge)
     {
         $challenge->update($request->validated());
+        $challenge->load(['creator.roles', 'creator.user']);
 
         return $this->success(new ChallengeResource($challenge), 'Challenge updated successfully');
     }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ChallengeAttachmentController;
 use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\EnrollmentController;
@@ -42,11 +43,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/modules/{module}/lessons', [LessonController::class, 'getByModule']);
     Route::get('/modules/{module}/challenges', [ChallengeController::class, 'getByModule']);
 
-    Route::get('/challenges/{challenge}/submissions',   [SubmissionController::class, 'index']);
+    Route::get('/challenges/{challenge}/submissions',   [SubmissionController::class, 'index'])->middleware('teacher_or_admin');
     Route::post('/challenges/{challenge}/submit',       [SubmissionController::class, 'store']);
     Route::get('/challenges/{challenge}/my-submissions', [SubmissionController::class, 'mySubmissions']);
     Route::get('/submissions/{submission}',             [SubmissionController::class, 'show']);
-    Route::patch('/submissions/{submission}',           [SubmissionController::class, 'update']);
+    Route::patch('/submissions/{submission}',           [SubmissionController::class, 'update'])->middleware('teacher_or_admin');
     Route::get('/submissions/{submission}/file',        [SubmissionController::class, 'file']);
 
     // Lesson Completion
@@ -54,13 +55,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     // Lesson Attachments
     Route::get('/lessons/{lesson}/attachments',         [LessonAttachmentController::class, 'index']);
-    Route::post('/lessons/{lesson}/attachments',        [LessonAttachmentController::class, 'store']);
-    Route::delete('/lessons/{lesson}/attachments/{attachment}', [LessonAttachmentController::class, 'destroy']);
+    Route::post('/lessons/{lesson}/attachments',        [LessonAttachmentController::class, 'store'])->middleware('teacher_or_admin');
+    Route::delete('/lessons/{lesson}/attachments/{attachment}', [LessonAttachmentController::class, 'destroy'])->middleware('teacher_or_admin');
 
     // Challenge Attachments
     Route::get('/challenges/{challenge}/attachments',   [ChallengeAttachmentController::class, 'index']);
-    Route::post('/challenges/{challenge}/attachments',  [ChallengeAttachmentController::class, 'store']);
-    Route::delete('/challenges/{challenge}/attachments/{attachment}', [ChallengeAttachmentController::class, 'destroy']);
+    Route::post('/challenges/{challenge}/attachments',  [ChallengeAttachmentController::class, 'store'])->middleware('teacher_or_admin');
+    Route::delete('/challenges/{challenge}/attachments/{attachment}', [ChallengeAttachmentController::class, 'destroy'])->middleware('teacher_or_admin');
 
     // Generic Attachment File Download
     Route::get('/attachments/{attachment}/file',        [AttachmentController::class, 'file']);
@@ -78,10 +79,14 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/my/tracks/{track}/overview',           [EnrollmentController::class, 'trackOverview']);
     Route::get('/my/dashboard',                         [EnrollmentController::class, 'dashboard']);
 
-    Route::apiResource('tracks', TrackController::class);
-    Route::apiResource('modules', ModuleController::class);
-    Route::apiResource('lessons', LessonController::class);
-    Route::apiResource('challenges', ChallengeController::class);
+    Route::apiResource('tracks', TrackController::class)->except('destroy');
+    Route::apiResource('modules', ModuleController::class)->except('destroy');
+    Route::apiResource('lessons', LessonController::class)->except('destroy');
+    Route::apiResource('challenges', ChallengeController::class)->except('destroy');
+    Route::delete('/tracks/{track}', [TrackController::class, 'destroy'])->middleware('teacher_or_admin');
+    Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->middleware('teacher_or_admin');
+    Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy'])->middleware('teacher_or_admin');
+    Route::delete('/challenges/{challenge}', [ChallengeController::class, 'destroy'])->middleware('teacher_or_admin');
     Route::apiResource('study-classes', StudyClassController::class);
 
     Route::get('/me', [AuthController::class, 'me']);
@@ -113,18 +118,17 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/roles', [RoleController::class, 'index']);
     Route::get('/roles/{role}', [RoleController::class, 'show']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Audit Log Endpoints
-    |--------------------------------------------------------------------------
-    | Get audit logs for specific resources and general audit logs with filters.
-    | Accessible by authenticated users.
-    */
-    Route::get('/audit-logs', [AuditLogController::class, 'index']);
-    Route::get('/tracks/{track}/audit-log', [AuditLogController::class, 'trackAuditLog']);
-    Route::get('/modules/{module}/audit-log', [AuditLogController::class, 'moduleAuditLog']);
-    Route::get('/lessons/{lesson}/audit-log', [AuditLogController::class, 'lessonAuditLog']);
-    Route::get('/challenges/{challenge}/audit-log', [AuditLogController::class, 'challengeAuditLog']);
+    Route::middleware('teacher_or_admin')->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
+        Route::get('/tracks/{track}/audit-log', [AuditLogController::class, 'trackAuditLog']);
+        Route::get('/modules/{module}/audit-log', [AuditLogController::class, 'moduleAuditLog']);
+        Route::get('/lessons/{lesson}/audit-log', [AuditLogController::class, 'lessonAuditLog']);
+        Route::get('/challenges/{challenge}/audit-log', [AuditLogController::class, 'challengeAuditLog']);
+
+        // Teacher dashboard & submission queue
+        Route::get('/teacher/dashboard',    [TeacherController::class, 'dashboard']);
+        Route::get('/teacher/submissions',  [TeacherController::class, 'submissions']);
+    });
 
     // Admin-only role operations
     Route::middleware('admin')->group(function () {

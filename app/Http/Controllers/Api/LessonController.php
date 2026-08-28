@@ -106,6 +106,7 @@ class LessonController extends Controller
         }
 
         $lesson = Lesson::create($data);
+        $lesson->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new LessonResource($lesson),
@@ -133,6 +134,7 @@ class LessonController extends Controller
     public function update(LessonUpdateRequest $request, Lesson $lesson)
     {
         $lesson->update($request->validated());
+        $lesson->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new LessonResource($lesson),

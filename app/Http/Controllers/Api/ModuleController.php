@@ -104,6 +104,8 @@ class ModuleController extends Controller
             return $this->error('Failed to create module', 500);
         }
 
+        $module->load(['creator.roles', 'creator.user']);
+
         return $this->success(
             new ModuleResource($module),
             'Module created successfully',
@@ -126,6 +128,7 @@ class ModuleController extends Controller
     public function update(ModuleUpdateRequest $request, Module $module)
     {
         $module->update($request->validated());
+        $module->load(['creator.roles', 'creator.user']);
 
         return $this->success(new ModuleResource($module), 'Module updated successfully');
     }
