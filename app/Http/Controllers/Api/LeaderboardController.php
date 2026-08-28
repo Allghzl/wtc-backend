@@ -43,9 +43,10 @@ class LeaderboardController extends Controller
             $period = 'all-time';
         }
 
-        // Build base query
+        // Build base query — students only
         $query = Profile::with(['user', 'studyClass'])
-            ->where('points', '>', 0); // Only include profiles with points
+            ->whereHas('roles', fn ($q) => $q->where('name', 'student'))
+            ->where('points', '>', 0);
 
         // Apply study class filter if provided
         if ($studyClassFilter) {

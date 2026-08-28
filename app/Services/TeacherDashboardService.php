@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Challenge;
+use App\Models\Lesson;
 use App\Models\Profile;
 use App\Models\Submission;
+use App\Models\Track;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class TeacherDashboardService
@@ -15,17 +17,19 @@ class TeacherDashboardService
     public function dashboard(): array
     {
         $totalSubmissions = Submission::count();
-        $pendingCount     = Submission::where('status', 'pending')->count();
+        $pendingCount     = Submission::where('status', 'submitted')->count();
         $gradedCount      = Submission::where('status', 'graded')->count();
         $totalStudents    = Profile::whereHas('roles', fn ($q) => $q->where('name', 'student'))->count();
         $totalChallenges  = Challenge::count();
+        $totalTracks      = Track::count();
+        $totalLessons     = Lesson::count();
 
         // Latest pending submissions (oldest first — most urgent for grading)
         $pendingQueue = Submission::with([
             'challenge:id,title,slug,type,max_score',
             'profile:id,display_name',
         ])
-            ->where('status', 'pending')
+            ->where('status', 'submitted')
             ->orderBy('submitted_at', 'asc')
             ->limit(10)
             ->get();
@@ -38,11 +42,13 @@ class TeacherDashboardService
 
         return [
             'stats' => [
-                'total_submissions'  => $totalSubmissions,
+                'total_submissions'   => $totalSubmissions,
                 'pending_submissions' => $pendingCount,
-                'graded_submissions' => $gradedCount,
-                'total_students'     => $totalStudents,
-                'total_challenges'   => $totalChallenges,
+                'graded_submissions'  => $gradedCount,
+                'total_students'      => $totalStudents,
+                'total_challenges'    => $totalChallenges,
+                'total_tracks'        => $totalTracks,
+                'total_lessons'       => $totalLessons,
             ],
             'pending_submissions' => $pendingQueue,
             'leaderboard'         => $leaderboard,
