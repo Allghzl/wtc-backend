@@ -374,19 +374,27 @@ JSON;
             throw new Exception('AI tidak mengembalikan respons.');
         }
 
-        // Extract JSON from inside ```json ... ``` fences (may have thinking text before it)
-        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/si', $rawContent, $matches)) {
+        $content = null;
+
+        // Strategy 1: extract content between ```json ... ``` or ``` ... ``` fences
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/i', $rawContent, $matches)) {
             $content = trim($matches[1]);
-        } else {
-            // Fallback: find the first { ... } block in the raw content
+        }
+
+        // Strategy 2: find first { to last } in the raw content
+        if (empty($content)) {
             $start = strpos($rawContent, '{');
             $end   = strrpos($rawContent, '}');
-
             if ($start !== false && $end !== false && $end > $start) {
                 $content = substr($rawContent, $start, $end - $start + 1);
-            } else {
-                $content = trim($rawContent);
             }
+        }
+
+        if (empty($content)) {
+            throw new Exception(
+                'Konten materi belum cukup untuk di-generate. ' .
+                'Pastikan lesson memiliki materi yang substantif.'
+            );
         }
 
         $decoded = json_decode($content, true);
@@ -397,14 +405,9 @@ JSON;
                 'error' => json_last_error_msg(),
             ]);
 
-            // AI returned explanation/refusal instead of JSON — surface it clearly
-            $plainText = strip_tags($rawContent);
-            $preview   = mb_substr(trim($plainText), 0, 300);
-
             throw new Exception(
-                "Konten materi belum cukup untuk di-generate. " .
-                "Pastikan lesson memiliki materi yang substantif (bukan hanya template). " .
-                "Pesan dari AI: {$preview}"
+                'Konten materi belum cukup untuk di-generate. ' .
+                'Pastikan lesson memiliki materi yang substantif.'
             );
         }
 
