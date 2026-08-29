@@ -52,12 +52,13 @@ class StudentProgressController extends Controller
         });
 
         // Sort in memory (to avoid complex DB joins)
-        $profiles = match ($sort) {
+        $sorted = match ($sort) {
             'progress_desc' => $profiles->sortByDesc('overall_progress'),
             'progress_asc'  => $profiles->sortBy('overall_progress'),
             'points_desc'   => $profiles->sortByDesc('points'),
             default         => $profiles->sortBy('display_name'),
-        }->values();
+        };
+        $profiles = $sorted->values();
 
         // Manual pagination
         $page  = max(1, (int) $request->get('page', 1));
@@ -127,11 +128,12 @@ class StudentProgressController extends Controller
             ];
         });
 
-        $tracks = match ($sort) {
+        $sorted = match ($sort) {
             'progress_desc' => $tracks->sortByDesc('progress_percentage'),
             'progress_asc'  => $tracks->sortBy('progress_percentage'),
             default         => $tracks->sortBy('title'),
-        }->values();
+        };
+        $tracks = $sorted->values();
 
         return $this->success([
             'profile' => [
@@ -193,12 +195,13 @@ class StudentProgressController extends Controller
             return $track;
         });
 
-        $tracks = match ($sort) {
+        $sorted2 = match ($sort) {
             'avg_progress_desc' => $tracks->sortByDesc('avg_progress'),
             'avg_progress_asc'  => $tracks->sortBy('avg_progress'),
             'enrolled_desc'     => $tracks->sortByDesc('enrolled_count'),
             default             => $tracks->sortBy('title'),
-        }->values();
+        };
+        $tracks = $sorted2->values();
 
         $page  = max(1, (int) $request->get('page', 1));
         $total = $tracks->count();
@@ -274,11 +277,12 @@ class StudentProgressController extends Controller
             ];
         });
 
-        $profiles = match ($sort) {
+        $sorted3 = match ($sort) {
             'progress_asc' => $profiles->sortBy('progress_percentage'),
             'name_asc'     => $profiles->sortBy('display_name'),
             default        => $profiles->sortByDesc('progress_percentage'),
-        }->values();
+        };
+        $profiles = $sorted3->values();
 
         return $this->success([
             'track' => [
