@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ModuleController;
 
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\StudentProgressController;
 use App\Http\Controllers\Api\StudyClassController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\TrackController;
@@ -128,6 +129,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         // Teacher dashboard & submission queue
         Route::get('/teacher/dashboard',    [TeacherController::class, 'dashboard']);
         Route::get('/teacher/submissions',  [TeacherController::class, 'submissions']);
+
+        // Student progress
+        Route::get('/student-progress/profiles',           [StudentProgressController::class, 'profiles']);
+        Route::get('/student-progress/profiles/{profile}', [StudentProgressController::class, 'profileDetail']);
+        Route::get('/student-progress/tracks',             [StudentProgressController::class, 'tracks']);
+        Route::get('/student-progress/tracks/{track}',     [StudentProgressController::class, 'trackDetail']);
     });
 
     // Admin-only role operations
