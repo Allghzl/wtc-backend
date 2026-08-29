@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LessonCompletion;
 use App\Models\Profile;
 use App\Models\Track;
+use App\Services\AvatarService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
 class StudentProgressController extends Controller
 {
     use ApiResponse;
+
+    public function __construct(private AvatarService $avatarService) {}
 
     /**
      * List all student profiles with enrollment summary.
@@ -68,7 +71,9 @@ class StudentProgressController extends Controller
         $data = $items->map(fn ($p) => [
             'id'                    => $p->id,
             'display_name'          => $p->display_name ?? $p->user?->name ?? 'Unknown',
-            'avatar'                => $p->user?->avatar,
+            'avatar'                => $p->user?->avatar
+                ? $this->avatarService->generateAvatarUrl($p->user)
+                : null,
             'points'                => $p->points,
             'enrolled_tracks_count' => $p->enrolled_tracks_count,
             'completed_tracks_count' => $p->completed_tracks_count,
@@ -95,6 +100,8 @@ class StudentProgressController extends Controller
     {
         $statusFilter = $request->get('status');
         $sort         = $request->get('sort', 'title_asc');
+
+        $profile->loadMissing('user');
 
         $enrollments = $profile->trackEnrollments()
             ->with(['track.modules.lessons'])
@@ -142,7 +149,9 @@ class StudentProgressController extends Controller
             'profile' => [
                 'id'           => $profile->id,
                 'display_name' => $profile->display_name ?? $profile->user?->name ?? 'Unknown',
-                'avatar'       => $profile->user?->avatar,
+                'avatar'       => $profile->user?->avatar
+                    ? $this->avatarService->generateAvatarUrl($profile->user)
+                    : null,
                 'points'       => $profile->points,
             ],
             'tracks' => $tracks,
@@ -150,18 +159,26 @@ class StudentProgressController extends Controller
     }
 
     /**
-     * List all tracks that have enrollments.
-     * Supports: search, sort (avg_progress_desc|avg_progress_asc|enrolled_desc|title_asc), page, per_page.
+     * List tracks filtered by enrollment status.
+     * Supports: enrolled (true|false), search, sort (avg_progress_desc|avg_progress_asc|enrolled_desc|title_asc), page, per_page.
      */
     public function tracks(Request $request): JsonResponse
     {
-        $search  = $request->get('search');
-        $sort    = $request->get('sort', 'title_asc');
-        $perPage = max(1, min((int) $request->get('per_page', 15), 100));
+        $search   = $request->get('search');
+        $sort     = $request->get('sort', 'title_asc');
+        $perPage  = max(1, min((int) $request->get('per_page', 15), 100));
+        $enrolled = $request->get('enrolled');
 
         $query = Track::withCount(['enrollments as enrolled_count'])
-            ->with(['modules.lessons', 'enrollments'])
-            ->has('enrollments');
+            ->with(['modules.lessons', 'enrollments']);
+
+        if ($enrolled === 'false') {
+            $query->doesntHave('enrollments');
+            $responseMessage = 'Unenrolled tracks retrieved successfully.';
+        } else {
+            $query->has('enrollments');
+            $responseMessage = 'Tracks retrieved successfully.';
+        }
 
         if ($search) {
             $query->where('title', 'like', "%{$search}%");
@@ -229,7 +246,7 @@ class StudentProgressController extends Controller
                 'total'        => $total,
                 'last_page'    => (int) ceil($total / $perPage),
             ],
-        ], 'Tracks retrieved successfully.');
+        ], $responseMessage);
     }
 
     /**
@@ -273,7 +290,9 @@ class StudentProgressController extends Controller
             return [
                 'id'                  => $profile->id,
                 'display_name'        => $profile->display_name ?? $profile->user?->name ?? 'Unknown',
-                'avatar'              => $profile->user?->avatar,
+                'avatar'              => $profile->user?->avatar
+                    ? $this->avatarService->generateAvatarUrl($profile->user)
+                    : null,
                 'points'              => $profile->points,
                 'completed_lessons'   => $completed,
                 'total_lessons'       => $totalLessons,
