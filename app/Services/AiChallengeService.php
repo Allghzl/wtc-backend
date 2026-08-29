@@ -58,9 +58,10 @@ class AiChallengeService
         $parts[] = "Judul Lesson: {$lesson->title}";
 
         if (!empty($lesson->content)) {
-            // Strip HTML/JSON formatting if content is rich text
-            $plainContent = strip_tags($lesson->content);
-            $parts[] = "Konten Lesson:\n{$plainContent}";
+            $plainContent = $this->extractPlainText($lesson->content);
+            if (!empty($plainContent)) {
+                $parts[] = "Konten Lesson:\n{$plainContent}";
+            }
         }
 
         return implode("\n\n", $parts);
@@ -84,17 +85,69 @@ class AiChallengeService
             $section = "=== Lesson {$no}: {$lesson->title} ===";
 
             if (!empty($lesson->content)) {
-                $plainContent = strip_tags($lesson->content);
-                if (strlen($plainContent) > 2000) {
-                    $plainContent = substr($plainContent, 0, 2000) . '...';
+                $plainContent = $this->extractPlainText($lesson->content);
+                if (!empty($plainContent)) {
+                    if (strlen($plainContent) > 2000) {
+                        $plainContent = substr($plainContent, 0, 2000) . '...';
+                    }
+                    $section .= "\n{$plainContent}";
                 }
-                $section .= "\n{$plainContent}";
             }
 
             $parts[] = $section;
         }
 
         return implode("\n\n", $parts);
+    }
+
+    /**
+     * Extract readable plain text from content — handles Lexical JSON, HTML, or plain text.
+     */
+    private function extractPlainText(string $content): string
+    {
+        $content = trim($content);
+
+        if (empty($content)) {
+            return '';
+        }
+
+        // Try Lexical JSON first
+        $decoded = json_decode($content, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['root'])) {
+            return trim($this->extractFromLexicalNode($decoded['root']));
+        }
+
+        // Fallback: strip HTML tags
+        return trim(strip_tags($content));
+    }
+
+    /**
+     * Recursively extract text from a Lexical editor node tree.
+     */
+    private function extractFromLexicalNode(array $node): string
+    {
+        $text = '';
+
+        // Leaf text node
+        if (isset($node['text'])) {
+            $text .= $node['text'];
+        }
+
+        // Recurse into children
+        if (!empty($node['children']) && is_array($node['children'])) {
+            foreach ($node['children'] as $child) {
+                $text .= $this->extractFromLexicalNode($child);
+            }
+
+            // Add newline after block-level nodes
+            $blockTypes = ['paragraph', 'heading', 'listitem', 'quote', 'code'];
+            if (isset($node['type']) && in_array($node['type'], $blockTypes)) {
+                $text .= "\n";
+            }
+        }
+
+        return $text;
     }
 
     /*
