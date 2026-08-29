@@ -10,6 +10,7 @@ use App\Services\AvatarService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StudentProgressController extends Controller
 {
@@ -27,7 +28,7 @@ class StudentProgressController extends Controller
         $sort    = $request->get('sort', 'name_asc');
         $perPage = max(1, min((int) $request->get('per_page', 15), 100));
 
-        $query = Profile::with(['user', 'trackEnrollments.track.modules.lessons'])
+        $query = Profile::with(['user', 'trackEnrollments'])
             ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']));
 
         if ($search) {
@@ -38,22 +39,40 @@ class StudentProgressController extends Controller
 
         $profileIds = $profiles->pluck('id');
 
-        // Map profile_id → count of completed lessons (single query)
-        $completionCounts = LessonCompletion::whereIn('profile_id', $profileIds)
-            ->selectRaw('profile_id, COUNT(*) as cnt')
-            ->groupBy('profile_id')
+        // Total lessons per profile via raw DB join — avoids the broken Eloquent
+        // collection chain ($e->track?->modules?->sum(...) always returns 0).
+        $lessonCountsPerProfile = DB::table('lessons')
+            ->join('modules', 'lessons.module_id', '=', 'modules.id')
+            ->join('track_enrollments', 'modules.track_id', '=', 'track_enrollments.track_id')
+            ->whereIn('track_enrollments.profile_id', $profileIds)
+            ->whereNull('lessons.deleted_at')
+            ->whereNull('modules.deleted_at')
+            ->selectRaw('track_enrollments.profile_id, COUNT(DISTINCT lessons.id) as cnt')
+            ->groupBy('track_enrollments.profile_id')
             ->pluck('cnt', 'profile_id');
 
-        $profiles = $profiles->map(function (Profile $profile) use ($completionCounts) {
+        // Completed lessons per profile scoped to lessons that belong to enrolled tracks.
+        // Using DISTINCT lesson_id prevents double-counting when multiple enrolled tracks
+        // share the same lesson.
+        $completionCounts = DB::table('lesson_completions')
+            ->join('lessons', 'lesson_completions.lesson_id', '=', 'lessons.id')
+            ->join('modules', 'lessons.module_id', '=', 'modules.id')
+            ->join('track_enrollments', 'modules.track_id', '=', 'track_enrollments.track_id')
+            ->whereColumn('lesson_completions.profile_id', 'track_enrollments.profile_id')
+            ->whereIn('lesson_completions.profile_id', $profileIds)
+            ->whereNull('lessons.deleted_at')
+            ->whereNull('modules.deleted_at')
+            ->selectRaw('lesson_completions.profile_id, COUNT(DISTINCT lessons.id) as cnt')
+            ->groupBy('lesson_completions.profile_id')
+            ->pluck('cnt', 'profile_id');
+
+        $profiles = $profiles->map(function (Profile $profile) use ($lessonCountsPerProfile, $completionCounts) {
             $enrollments      = $profile->trackEnrollments;
             $enrolledCount    = $enrollments->count();
             $completedCount   = $enrollments->where('status', 'completed')->count();
             $inProgressCount  = $enrollments->whereNotIn('status', ['completed', 'dropped'])->count();
 
-            // Total lessons across all enrolled tracks
-            $totalLessons     = $enrollments->sum(fn ($e) =>
-                $e->track?->modules?->sum(fn ($m) => $m->lessons?->count() ?? 0) ?? 0
-            );
+            $totalLessons     = (int) ($lessonCountsPerProfile[$profile->id] ?? 0);
             $completedLessons = (int) ($completionCounts[$profile->id] ?? 0);
             $progressPct      = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
 
