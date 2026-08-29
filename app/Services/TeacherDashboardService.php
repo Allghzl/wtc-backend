@@ -68,6 +68,10 @@ class TeacherDashboardService
             'profile:id,display_name',
         ]);
 
+        if (!empty($filters['search'])) {
+            $query->whereHas('profile', fn ($q) => $q->where('display_name', 'like', '%' . $filters['search'] . '%'));
+        }
+
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
