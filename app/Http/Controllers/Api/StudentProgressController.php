@@ -76,12 +76,15 @@ class StudentProgressController extends Controller
             'overall_progress'      => $p->overall_progress,
         ]);
 
-        return $this->success($data, 'Student profiles retrieved successfully.', [
-            'current_page' => $page,
-            'per_page'     => $perPage,
-            'total'        => $total,
-            'last_page'    => (int) ceil($total / $perPage),
-        ]);
+        return $this->success([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $page,
+                'per_page'     => $perPage,
+                'total'        => $total,
+                'last_page'    => (int) ceil($total / $perPage),
+            ],
+        ], 'Student profiles retrieved successfully.');
     }
 
     /**
@@ -218,12 +221,15 @@ class StudentProgressController extends Controller
             'avg_progress'   => $t->avg_progress,
         ]);
 
-        return $this->success($data, 'Tracks retrieved successfully.', [
-            'current_page' => $page,
-            'per_page'     => $perPage,
-            'total'        => $total,
-            'last_page'    => (int) ceil($total / $perPage),
-        ]);
+        return $this->success([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $page,
+                'per_page'     => $perPage,
+                'total'        => $total,
+                'last_page'    => (int) ceil($total / $perPage),
+            ],
+        ], 'Tracks retrieved successfully.');
     }
 
     /**
