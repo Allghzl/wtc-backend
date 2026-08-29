@@ -19,7 +19,7 @@ class TeacherDashboardService
         $totalSubmissions = Submission::count();
         $pendingCount     = Submission::where('status', 'submitted')->count();
         $gradedCount      = Submission::where('status', 'graded')->count();
-        $totalStudents    = Profile::whereHas('roles', fn ($q) => $q->where('name', 'student'))->count();
+        $totalStudents    = Profile::whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))->count();
         $totalChallenges  = Challenge::count();
         $totalTracks      = Track::count();
         $totalLessons     = Lesson::count();
@@ -34,8 +34,8 @@ class TeacherDashboardService
             ->limit(10)
             ->get();
 
-        // Top 5 students by points for leaderboard preview
-        $leaderboard = Profile::whereHas('roles', fn ($q) => $q->where('name', 'student'))
+        // Top 5 students by points for leaderboard preview (exclude admins and teachers)
+        $leaderboard = Profile::whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))
             ->orderBy('points', 'desc')
             ->limit(5)
             ->get(['id', 'display_name', 'points']);

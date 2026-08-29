@@ -287,7 +287,7 @@ class ProfileController extends Controller
         if (!$result['success']) {
             return $this->error(
                 $result['message'],
-                400
+                $result['status'] ?? 400
             );
         }
 

@@ -101,6 +101,15 @@ class RoleService
                 ];
             }
 
+            // Enforce minimum one role
+            if ($profile->roles()->count() === 1) {
+                return [
+                    'success' => false,
+                    'message' => 'Profile must have at least one role.',
+                    'status'  => 422,
+                ];
+            }
+
             DB::beginTransaction();
 
             try {
