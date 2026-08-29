@@ -325,11 +325,23 @@ JSON;
                 'raw'   => $rawContent,
                 'error' => json_last_error_msg(),
             ]);
-            throw new Exception('Gagal memproses respons AI. Coba lagi.');
+
+            // AI returned explanation/refusal instead of JSON — surface it clearly
+            $plainText = strip_tags($rawContent);
+            $preview   = mb_substr(trim($plainText), 0, 300);
+
+            throw new Exception(
+                "Konten materi belum cukup untuk di-generate. " .
+                "Pastikan lesson memiliki materi yang substantif (bukan hanya template). " .
+                "Pesan dari AI: {$preview}"
+            );
         }
 
         if (empty($decoded['questions']) || !is_array($decoded['questions'])) {
-            throw new Exception('AI tidak menghasilkan soal. Coba lagi.');
+            throw new Exception(
+                'AI tidak menghasilkan soal. Kemungkinan konten lesson belum cukup. ' .
+                'Tambahkan materi yang lebih detail pada lesson terlebih dahulu.'
+            );
         }
 
         return [
