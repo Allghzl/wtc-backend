@@ -27,7 +27,7 @@ class StudentProgressController extends Controller
         $sort    = $request->get('sort', 'name_asc');
         $perPage = max(1, min((int) $request->get('per_page', 15), 100));
 
-        $query = Profile::with(['user', 'trackEnrollments'])
+        $query = Profile::with(['user', 'trackEnrollments.track.modules.lessons'])
             ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']));
 
         if ($search) {
@@ -36,20 +36,31 @@ class StudentProgressController extends Controller
 
         $profiles = $query->get(['id', 'user_id', 'display_name', 'points', 'study_class_id']);
 
-        // Calculate progress for each profile
-        $profiles = $profiles->map(function (Profile $profile) {
-            $enrollments       = $profile->trackEnrollments;
-            $enrolledCount     = $enrollments->count();
-            $completedCount    = $enrollments->where('status', 'completed')->count();
-            $inProgressCount   = $enrollments->whereNotIn('status', ['completed', 'dropped'])->count();
+        $profileIds = $profiles->pluck('id');
 
-            // Simple progress ratio (completed / enrolled)
-            $progressPct = $enrolledCount > 0 ? round(($completedCount / $enrolledCount) * 100) : 0;
+        // Map profile_id → count of completed lessons (single query)
+        $completionCounts = LessonCompletion::whereIn('profile_id', $profileIds)
+            ->selectRaw('profile_id, COUNT(*) as cnt')
+            ->groupBy('profile_id')
+            ->pluck('cnt', 'profile_id');
 
-            $profile->enrolled_tracks_count   = $enrolledCount;
-            $profile->completed_tracks_count  = $completedCount;
+        $profiles = $profiles->map(function (Profile $profile) use ($completionCounts) {
+            $enrollments      = $profile->trackEnrollments;
+            $enrolledCount    = $enrollments->count();
+            $completedCount   = $enrollments->where('status', 'completed')->count();
+            $inProgressCount  = $enrollments->whereNotIn('status', ['completed', 'dropped'])->count();
+
+            // Total lessons across all enrolled tracks
+            $totalLessons     = $enrollments->sum(fn ($e) =>
+                $e->track?->modules?->sum(fn ($m) => $m->lessons?->count() ?? 0) ?? 0
+            );
+            $completedLessons = (int) ($completionCounts[$profile->id] ?? 0);
+            $progressPct      = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+
+            $profile->enrolled_tracks_count    = $enrolledCount;
+            $profile->completed_tracks_count   = $completedCount;
             $profile->in_progress_tracks_count = $inProgressCount;
-            $profile->overall_progress        = $progressPct;
+            $profile->overall_progress         = $progressPct;
 
             return $profile;
         });

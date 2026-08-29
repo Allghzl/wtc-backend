@@ -302,4 +302,56 @@ class AuditLogController extends Controller
             'Challenge restored successfully.'
         );
     }
+
+    /**
+     * List soft-deleted tracks (admin only).
+     */
+    public function trashedTracks(Request $request): JsonResponse
+    {
+        $items = Track::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        return $this->successWithPagination(
+            TrackResource::collection($items),
+            'Trashed tracks retrieved successfully.',
+            $items
+        );
+    }
+
+    /**
+     * List soft-deleted modules (admin only).
+     */
+    public function trashedModules(Request $request): JsonResponse
+    {
+        $items = Module::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        return $this->successWithPagination(
+            ModuleResource::collection($items),
+            'Trashed modules retrieved successfully.',
+            $items
+        );
+    }
+
+    /**
+     * List soft-deleted lessons (admin only).
+     */
+    public function trashedLessons(Request $request): JsonResponse
+    {
+        $items = Lesson::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        return $this->successWithPagination(
+            LessonResource::collection($items),
+            'Trashed lessons retrieved successfully.',
+            $items
+        );
+    }
+
+    /**
+     * List soft-deleted challenges (admin only).
+     */
+    public function trashedChallenges(Request $request): JsonResponse
+    {
+        $items = Challenge::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        return $this->successWithPagination(
+            ChallengeResource::collection($items),
+            'Trashed challenges retrieved successfully.',
+            $items
+        );
+    }
 }

@@ -155,6 +155,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         | Restore soft-deleted content. Only accessible by users with admin role.
         | Teachers cannot restore to encourage careful deletion.
         */
+        Route::get('/admin/tracks/trashed',     [AuditLogController::class, 'trashedTracks']);
+        Route::get('/admin/modules/trashed',    [AuditLogController::class, 'trashedModules']);
+        Route::get('/admin/lessons/trashed',    [AuditLogController::class, 'trashedLessons']);
+        Route::get('/admin/challenges/trashed', [AuditLogController::class, 'trashedChallenges']);
         Route::post('/admin/tracks/{id}/restore', [AuditLogController::class, 'restoreTrack']);
         Route::post('/admin/modules/{id}/restore', [AuditLogController::class, 'restoreModule']);
         Route::post('/admin/lessons/{id}/restore', [AuditLogController::class, 'restoreLesson']);
