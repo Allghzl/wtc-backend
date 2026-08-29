@@ -156,16 +156,31 @@ class AiChallengeService
         $questionSpec = $this->buildQuestionSpec($type, $mcqCount, $essayCount);
         $formatSpec   = $this->buildFormatSpec($type, $mcqCount, $essayCount);
 
-        return <<<PROMPT
-Kamu adalah asisten pendidik yang bertugas membuat soal ujian berkualitas tinggi.
+        // Detect thin content — fallback to topic-based generation
+        $isThinContent = strlen(strip_tags($context)) < 300;
 
-{$langInstruction}
+        $contextInstruction = $isThinContent
+            ? <<<INST
+REFERENSI TOPIK (konten lesson masih dalam pengembangan):
+{$context}
 
+INSTRUKSI PENTING:
+Konten lesson di atas masih berupa draft/template. Gunakan **judul topik** sebagai panduan, dan buatkan soal berdasarkan **pengetahuan umum yang relevan** tentang topik tersebut. Soal harus substantif dan menguji pemahaman konsep nyata — bukan tentang struktur lesson ini.
+INST
+            : <<<INST
 MATERI YANG DIAJARKAN:
 {$context}
 
 INSTRUKSI PENTING:
 Buatkan soal yang menguji pemahaman siswa terhadap **KONSEP DAN PENGETAHUAN** yang ada di dalam materi di atas.
+INST;
+
+        return <<<PROMPT
+Kamu adalah asisten pendidik yang bertugas membuat soal ujian berkualitas tinggi.
+
+{$langInstruction}
+
+{$contextInstruction}
 - Tingkat kesulitan: {$difficultyDesc}
 - {$questionSpec}
 
