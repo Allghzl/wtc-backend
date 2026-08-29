@@ -323,6 +323,40 @@ JSON;
         return implode(",\n", $items);
     }
 
+    /**
+     * Parse SSE (Server-Sent Events) streaming response and concatenate all content chunks.
+     */
+    private function parseSseStream(string $body): string
+    {
+        $content = '';
+        $lines   = explode("\n", $body);
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if (!str_starts_with($line, 'data:')) {
+                continue;
+            }
+
+            $json = trim(substr($line, 5));
+
+            if ($json === '[DONE]') {
+                break;
+            }
+
+            $chunk = json_decode($json, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                continue;
+            }
+
+            $delta = $chunk['choices'][0]['delta']['content'] ?? '';
+            $content .= $delta;
+        }
+
+        return $content;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | API Call
@@ -346,7 +380,7 @@ JSON;
                     ],
                 ],
                 'temperature' => 0.7,
-                'max_tokens'  => 4096,
+                'max_tokens'  => 2048,
             ]);
 
         if (!$response->successful()) {
@@ -357,7 +391,23 @@ JSON;
             throw new Exception("AI API error: HTTP {$response->status()}");
         }
 
+        $body = $response->body();
+
+        // Handle SSE streaming format: "data: {...}\ndata: {...}\ndata: [DONE]"
+        if (str_starts_with(ltrim($body), 'data:')) {
+            return $this->parseSseStream($body);
+        }
+
         $data = $response->json();
+
+        // Handle AI router truncation
+        if (isset($data['_truncated']) && $data['_truncated'] === true) {
+            $preview = $data['_preview'] ?? '';
+            if (!empty($preview)) {
+                return stripslashes($preview);
+            }
+            throw new Exception('Response AI terpotong oleh router. Coba kurangi jumlah soal.');
+        }
 
         return $data['choices'][0]['message']['content'] ?? '';
     }
