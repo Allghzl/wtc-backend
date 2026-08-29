@@ -156,59 +156,63 @@ class AiChallengeService
         $questionSpec = $this->buildQuestionSpec($type, $mcqCount, $essayCount);
         $formatSpec   = $this->buildFormatSpec($type, $mcqCount, $essayCount);
 
-        // Detect thin content — fallback to topic-based generation
-        $isThinContent = strlen(strip_tags($context)) < 300;
+        // Detect thin content — use a simpler topic-based prompt
+        $plainContext  = strip_tags($context);
+        $isThinContent = strlen($plainContext) < 800;
 
-        $contextInstruction = $isThinContent
-            ? <<<INST
-REFERENSI TOPIK (konten lesson masih dalam pengembangan):
-{$context}
+        if ($isThinContent) {
+            return <<<PROMPT
+Kamu adalah asisten pendidik yang bertugas membuat soal ujian.
 
-INSTRUKSI PENTING:
-Konten lesson di atas masih berupa draft/template. Gunakan **judul topik** sebagai panduan, dan buatkan soal berdasarkan **pengetahuan umum yang relevan** tentang topik tersebut. Soal harus substantif dan menguji pemahaman konsep nyata — bukan tentang struktur lesson ini.
-INST
-            : <<<INST
-MATERI YANG DIAJARKAN:
-{$context}
+{$langInstruction}
 
-INSTRUKSI PENTING:
-Buatkan soal yang menguji pemahaman siswa terhadap **KONSEP DAN PENGETAHUAN** yang ada di dalam materi di atas.
-INST;
+Buatkan soal ujian tentang topik: **{$plainContext}**
+
+Spesifikasi soal:
+- Tingkat kesulitan: {$difficultyDesc}
+- {$questionSpec}
+- Soal harus menguji pemahaman konsep-konsep yang relevan dengan topik di atas
+- Gunakan pengetahuan umum kamu tentang topik tersebut
+
+FORMAT RESPONS:
+{$formatSpec}
+
+PENTING:
+- Kembalikan HANYA JSON valid di dalam ```json ... ```, tidak ada teks lain
+- Field "answer" untuk MCQ harus berupa huruf kapital: "A", "B", "C", atau "D"
+- Field "options" harus berisi tepat 4 pilihan (index 0=A, 1=B, 2=C, 3=D)
+- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas
+- Field "score" isi dengan 0
+PROMPT;
+        }
 
         return <<<PROMPT
 Kamu adalah asisten pendidik yang bertugas membuat soal ujian berkualitas tinggi.
 
 {$langInstruction}
 
-{$contextInstruction}
+MATERI YANG DIAJARKAN:
+{$context}
+
+INSTRUKSI PENTING:
+Buatkan soal yang menguji pemahaman siswa terhadap **KONSEP DAN PENGETAHUAN** yang ada di dalam materi di atas.
 - Tingkat kesulitan: {$difficultyDesc}
 - {$questionSpec}
 
 LARANGAN KERAS:
 - JANGAN membuat soal tentang struktur lesson (berapa learning objective, apa tujuan lesson, dsb.)
 - JANGAN membuat soal tentang metadata (judul lesson, urutan lesson, dsb.)
-- JANGAN membuat soal yang jawabannya hanya bisa ditemukan dengan membaca label/heading
 - SEMUA soal HARUS menguji pemahaman substantif tentang topik yang diajarkan
 
-CONTOH SOAL YANG BAIK (substantif):
-- "Apa perbedaan antara HTTP GET dan POST?"
-- "Mengapa stateless menjadi karakteristik penting dalam REST API?"
-- "Jelaskan bagaimana browser melakukan rendering setelah menerima HTML dari server."
-
-CONTOH SOAL YANG BURUK (jangan dibuat):
-- "Berapa jumlah learning objectives dalam lesson ini?"
-- "Apa yang akan dipelajari di lesson ini?"
-- "Lesson ini merupakan bagian ke berapa?"
-
-FORMAT RESPONS (JSON saja, tanpa penjelasan tambahan):
+FORMAT RESPONS:
 {$formatSpec}
 
 PENTING:
-- Kembalikan HANYA JSON valid di dalam ```json ... ```, tidak ada teks lain di luar blok JSON
+- Kembalikan HANYA JSON valid di dalam ```json ... ```, tidak ada teks lain
 - Field "answer" untuk MCQ harus berupa huruf kapital: "A", "B", "C", atau "D"
 - Field "options" harus berisi tepat 4 pilihan (index 0=A, 1=B, 2=C, 3=D)
-- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas dan spesifik
-- Field "score" isi dengan 0, akan di-hitung ulang oleh sistem
+- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas
+- Field "score" isi dengan 0
 PROMPT;
     }
 
