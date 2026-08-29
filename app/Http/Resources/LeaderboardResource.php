@@ -18,7 +18,7 @@ class LeaderboardResource extends JsonResource
             'rank' => $this->rank,
             'profile' => [
                 'id' => $this->id,
-                'display_name' => $this->display_name,
+                'display_name' => $this->display_name ?? $this->user?->name ?? 'Unknown',
                 'avatar' => $this->user?->avatar
                     ? app(\App\Services\AvatarService::class)->generateAvatarUrl($this->user)
                     : null,

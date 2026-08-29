@@ -35,10 +35,11 @@ class TeacherDashboardService
             ->get();
 
         // Top 5 students by points for leaderboard preview (exclude admins and teachers)
-        $leaderboard = Profile::whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))
+        $leaderboard = Profile::with('user')
+            ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))
             ->orderBy('points', 'desc')
             ->limit(5)
-            ->get(['id', 'display_name', 'points']);
+            ->get(['id', 'user_id', 'display_name', 'points']);
 
         return [
             'stats' => [

@@ -45,8 +45,7 @@ class LeaderboardController extends Controller
 
         // Build base query — exclude admins and teachers (pure students only)
         $query = Profile::with(['user', 'studyClass'])
-            ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))
-            ->where('points', '>', 0);
+            ->whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']));
 
         // Apply study class filter if provided
         if ($studyClassFilter) {

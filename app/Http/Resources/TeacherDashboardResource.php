@@ -40,7 +40,7 @@ class TeacherDashboardResource extends JsonResource
         $leaderboard = collect($this->resource['leaderboard'])
             ->map(fn ($profile) => [
                 'id'           => $profile->id,
-                'display_name' => $profile->display_name,
+                'display_name' => $profile->display_name ?? $profile->user?->name ?? 'Unknown',
                 'points'       => $profile->points,
             ]);
 
