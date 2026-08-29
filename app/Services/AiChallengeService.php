@@ -156,33 +156,32 @@ class AiChallengeService
         $questionSpec = $this->buildQuestionSpec($type, $mcqCount, $essayCount);
         $formatSpec   = $this->buildFormatSpec($type, $mcqCount, $essayCount);
 
-        // Detect thin content — use a simpler topic-based prompt
+        // Detect thin content — use topic-only prompt (no lesson context at all)
         $plainContext  = strip_tags($context);
         $isThinContent = strlen($plainContext) < 800;
 
         if ($isThinContent) {
+            // Extract topic from context (first non-empty line is usually the title)
+            $lines = array_filter(explode("\n", $plainContext), fn($l) => trim($l) !== '');
+            $topic = trim(reset($lines) ?: $plainContext);
+            // Strip common prefixes like "Judul Lesson:", "Judul Module:"
+            $topic = preg_replace('/^(Judul Lesson|Judul Module|Judul):\s*/i', '', $topic);
+
             return <<<PROMPT
-Kamu adalah asisten pendidik yang bertugas membuat soal ujian.
+Kamu adalah asisten pendidik. Buatkan soal ujian tentang topik berikut:
 
-{$langInstruction}
+Topik: {$topic}
 
-Buatkan soal ujian tentang topik: **{$plainContext}**
-
-Spesifikasi soal:
+Spesifikasi:
+- Bahasa: {$langInstruction}
 - Tingkat kesulitan: {$difficultyDesc}
 - {$questionSpec}
-- Soal harus menguji pemahaman konsep-konsep yang relevan dengan topik di atas
-- Gunakan pengetahuan umum kamu tentang topik tersebut
 
-FORMAT RESPONS:
+Langsung kembalikan JSON dalam format berikut, tanpa komentar, tanpa penjelasan:
+
+```json
 {$formatSpec}
-
-PENTING:
-- Kembalikan HANYA JSON valid di dalam ```json ... ```, tidak ada teks lain
-- Field "answer" untuk MCQ harus berupa huruf kapital: "A", "B", "C", atau "D"
-- Field "options" harus berisi tepat 4 pilihan (index 0=A, 1=B, 2=C, 3=D)
-- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas
-- Field "score" isi dengan 0
+```
 PROMPT;
         }
 
