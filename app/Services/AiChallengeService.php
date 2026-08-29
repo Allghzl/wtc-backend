@@ -157,28 +157,42 @@ class AiChallengeService
         $formatSpec   = $this->buildFormatSpec($type, $mcqCount, $essayCount);
 
         return <<<PROMPT
-Kamu adalah asisten pendidik yang bertugas membuat soal challenge untuk sistem pembelajaran online.
+Kamu adalah asisten pendidik yang bertugas membuat soal ujian berkualitas tinggi.
 
 {$langInstruction}
 
-KONTEKS MATERI:
+MATERI YANG DIAJARKAN:
 {$context}
 
-INSTRUKSI:
-Buatkan soal challenge dengan spesifikasi berikut:
+INSTRUKSI PENTING:
+Buatkan soal yang menguji pemahaman siswa terhadap **KONSEP DAN PENGETAHUAN** yang ada di dalam materi di atas.
 - Tingkat kesulitan: {$difficultyDesc}
 - {$questionSpec}
-- Semua soal harus berkaitan langsung dengan konten materi di atas
-- Jangan membuat soal di luar konteks materi yang diberikan
+
+LARANGAN KERAS:
+- JANGAN membuat soal tentang struktur lesson (berapa learning objective, apa tujuan lesson, dsb.)
+- JANGAN membuat soal tentang metadata (judul lesson, urutan lesson, dsb.)
+- JANGAN membuat soal yang jawabannya hanya bisa ditemukan dengan membaca label/heading
+- SEMUA soal HARUS menguji pemahaman substantif tentang topik yang diajarkan
+
+CONTOH SOAL YANG BAIK (substantif):
+- "Apa perbedaan antara HTTP GET dan POST?"
+- "Mengapa stateless menjadi karakteristik penting dalam REST API?"
+- "Jelaskan bagaimana browser melakukan rendering setelah menerima HTML dari server."
+
+CONTOH SOAL YANG BURUK (jangan dibuat):
+- "Berapa jumlah learning objectives dalam lesson ini?"
+- "Apa yang akan dipelajari di lesson ini?"
+- "Lesson ini merupakan bagian ke berapa?"
 
 FORMAT RESPONS (JSON saja, tanpa penjelasan tambahan):
 {$formatSpec}
 
 PENTING:
-- Kembalikan HANYA JSON valid, tidak ada teks lain di luar JSON
+- Kembalikan HANYA JSON valid di dalam ```json ... ```, tidak ada teks lain di luar blok JSON
 - Field "answer" untuk MCQ harus berupa huruf kapital: "A", "B", "C", atau "D"
 - Field "options" harus berisi tepat 4 pilihan (index 0=A, 1=B, 2=C, 3=D)
-- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas
+- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas dan spesifik
 - Field "score" isi dengan 0, akan di-hitung ulang oleh sistem
 PROMPT;
     }
@@ -289,10 +303,20 @@ JSON;
             throw new Exception('AI tidak mengembalikan respons.');
         }
 
-        // Strip markdown code fences if present (```json ... ```)
-        $content = preg_replace('/^```(?:json)?\s*/i', '', trim($rawContent));
-        $content = preg_replace('/\s*```$/', '', $content);
-        $content = trim($content);
+        // Extract JSON from inside ```json ... ``` fences (may have thinking text before it)
+        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/si', $rawContent, $matches)) {
+            $content = trim($matches[1]);
+        } else {
+            // Fallback: find the first { ... } block in the raw content
+            $start = strpos($rawContent, '{');
+            $end   = strrpos($rawContent, '}');
+
+            if ($start !== false && $end !== false && $end > $start) {
+                $content = substr($rawContent, $start, $end - $start + 1);
+            } else {
+                $content = trim($rawContent);
+            }
+        }
 
         $decoded = json_decode($content, true);
 
