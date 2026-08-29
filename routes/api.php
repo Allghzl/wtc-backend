@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
@@ -128,6 +129,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         // Teacher dashboard & submission queue
         Route::get('/teacher/dashboard',    [TeacherController::class, 'dashboard']);
         Route::get('/teacher/submissions',  [TeacherController::class, 'submissions']);
+
+        // AI Challenge Generation
+        Route::post('/lessons/{lesson}/generate-challenge',  [AiController::class, 'generateForLesson']);
+        Route::post('/modules/{module}/generate-challenge',  [AiController::class, 'generateForModule']);
     });
 
     // Admin-only role operations

@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'pinat_ai' => [
+        'api_key'  => env('PINAT_AI_API_KEY'),
+        'base_url' => env('PINAT_AI_BASE_URL', 'https://api.pinat.nl/v1'),
+        'model'    => env('PINAT_AI_MODEL', 'glm-4'),
+    ],
+
 ];

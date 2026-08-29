@@ -1,0 +1,363 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Lesson;
+use App\Models\Module;
+use Exception;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class AiChallengeService
+{
+    private string $apiKey;
+    private string $baseUrl;
+    private string $model;
+
+    public function __construct()
+    {
+        $this->apiKey  = config('services.pinat_ai.api_key');
+        $this->baseUrl = rtrim(config('services.pinat_ai.base_url'), '/');
+        $this->model   = config('services.pinat_ai.model');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public Entry Points
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Generate challenge questions from a single lesson's content.
+     */
+    public function generateFromLesson(Lesson $lesson, array $config): array
+    {
+        $context = $this->buildLessonContext($lesson);
+        return $this->generate($context, $config);
+    }
+
+    /**
+     * Generate challenge questions from all lessons inside a module.
+     */
+    public function generateFromModule(Module $module, array $config): array
+    {
+        $module->loadMissing('lessons');
+        $context = $this->buildModuleContext($module);
+        return $this->generate($context, $config);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Context Builders
+    |--------------------------------------------------------------------------
+    */
+
+    private function buildLessonContext(Lesson $lesson): string
+    {
+        $parts = [];
+        $parts[] = "Judul Lesson: {$lesson->title}";
+
+        if (!empty($lesson->content)) {
+            // Strip HTML/JSON formatting if content is rich text
+            $plainContent = strip_tags($lesson->content);
+            $parts[] = "Konten Lesson:\n{$plainContent}";
+        }
+
+        return implode("\n\n", $parts);
+    }
+
+    private function buildModuleContext(Module $module): string
+    {
+        $parts = [];
+        $parts[] = "Judul Module: {$module->title}";
+
+        $lessons = $module->lessons()->orderBy('order')->get();
+
+        if ($lessons->isEmpty()) {
+            throw new Exception('Module tidak memiliki lesson. Tambahkan lesson terlebih dahulu.');
+        }
+
+        $parts[] = "Jumlah Lesson: {$lessons->count()}";
+
+        foreach ($lessons as $index => $lesson) {
+            $no = $index + 1;
+            $section = "=== Lesson {$no}: {$lesson->title} ===";
+
+            if (!empty($lesson->content)) {
+                $plainContent = strip_tags($lesson->content);
+                if (strlen($plainContent) > 2000) {
+                    $plainContent = substr($plainContent, 0, 2000) . '...';
+                }
+                $section .= "\n{$plainContent}";
+            }
+
+            $parts[] = $section;
+        }
+
+        return implode("\n\n", $parts);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Core Generation Logic
+    |--------------------------------------------------------------------------
+    */
+
+    private function generate(string $context, array $config): array
+    {
+        $type       = $config['type'];       // multiple_choice | essay | mixed
+        $difficulty = $config['difficulty']; // easy | medium | hard
+        $maxScore   = (int) $config['max_score'];
+        $language   = $config['language'] ?? 'id';
+        $mcqCount   = (int) ($config['mcq_count'] ?? 0);
+        $essayCount = (int) ($config['essay_count'] ?? 0);
+
+        // Validate context isn't empty
+        if (empty(trim($context))) {
+            throw new Exception('Konten tidak cukup untuk generate challenge. Pastikan lesson memiliki konten.');
+        }
+
+        $prompt   = $this->buildPrompt($context, $type, $difficulty, $language, $mcqCount, $essayCount, $maxScore);
+        $response = $this->callApi($prompt);
+        $parsed   = $this->parseResponse($response);
+
+        // Recalculate scores to match frontend logic exactly
+        $parsed['questions'] = $this->applyScores($parsed['questions'], $type, $maxScore, $mcqCount, $essayCount);
+
+        return $parsed;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prompt Engineering
+    |--------------------------------------------------------------------------
+    */
+
+    private function buildPrompt(
+        string $context,
+        string $type,
+        string $difficulty,
+        string $language,
+        int $mcqCount,
+        int $essayCount,
+        int $maxScore
+    ): string {
+        $langInstruction = $language === 'id'
+            ? 'Gunakan Bahasa Indonesia yang baik dan benar.'
+            : 'Use proper English.';
+
+        $difficultyDesc = match ($difficulty) {
+            'easy'   => 'mudah, cocok untuk pemula',
+            'medium' => 'menengah, membutuhkan pemahaman yang cukup',
+            'hard'   => 'sulit, membutuhkan pemahaman mendalam dan analitis',
+            default  => 'menengah',
+        };
+
+        $questionSpec = $this->buildQuestionSpec($type, $mcqCount, $essayCount);
+        $formatSpec   = $this->buildFormatSpec($type, $mcqCount, $essayCount);
+
+        return <<<PROMPT
+Kamu adalah asisten pendidik yang bertugas membuat soal challenge untuk sistem pembelajaran online.
+
+{$langInstruction}
+
+KONTEKS MATERI:
+{$context}
+
+INSTRUKSI:
+Buatkan soal challenge dengan spesifikasi berikut:
+- Tingkat kesulitan: {$difficultyDesc}
+- {$questionSpec}
+- Semua soal harus berkaitan langsung dengan konten materi di atas
+- Jangan membuat soal di luar konteks materi yang diberikan
+
+FORMAT RESPONS (JSON saja, tanpa penjelasan tambahan):
+{$formatSpec}
+
+PENTING:
+- Kembalikan HANYA JSON valid, tidak ada teks lain di luar JSON
+- Field "answer" untuk MCQ harus berupa huruf kapital: "A", "B", "C", atau "D"
+- Field "options" harus berisi tepat 4 pilihan (index 0=A, 1=B, 2=C, 3=D)
+- Field "rubric" untuk essay harus berisi kriteria penilaian yang jelas
+- Field "score" isi dengan 0, akan di-hitung ulang oleh sistem
+PROMPT;
+    }
+
+    private function buildQuestionSpec(string $type, int $mcqCount, int $essayCount): string
+    {
+        return match ($type) {
+            'multiple_choice' => "Jumlah soal: {$mcqCount} soal pilihan ganda (MCQ)",
+            'essay'           => "Jumlah soal: {$essayCount} soal essay",
+            'mixed'           => "Jumlah soal: {$mcqCount} soal MCQ dan {$essayCount} soal essay",
+            default           => '',
+        };
+    }
+
+    private function buildFormatSpec(string $type, int $mcqCount, int $essayCount): string
+    {
+        $mcqExample = <<<JSON
+        {
+          "type": "multiple_choice",
+          "question": "Pertanyaan MCQ di sini?",
+          "options": ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"],
+          "answer": "A",
+          "score": 0
+        }
+JSON;
+
+        $essayExample = <<<JSON
+        {
+          "type": "essay",
+          "question": "Pertanyaan essay di sini?",
+          "rubric": "Kriteria penilaian: ...",
+          "score": 0
+        }
+JSON;
+
+        $questionsJson = match ($type) {
+            'multiple_choice' => $this->repeatExample($mcqExample, $mcqCount),
+            'essay'           => $this->repeatExample($essayExample, $essayCount),
+            'mixed'           => $this->repeatExample($mcqExample, $mcqCount) . ",\n" . $this->repeatExample($essayExample, $essayCount),
+            default           => '',
+        };
+
+        return <<<JSON
+{
+  "title": "Judul challenge yang deskriptif",
+  "content": "Deskripsi singkat tentang challenge ini (1-2 kalimat)",
+  "questions": [
+{$questionsJson}
+  ]
+}
+JSON;
+    }
+
+    private function repeatExample(string $example, int $count): string
+    {
+        $items = array_fill(0, max(1, $count), trim($example));
+        return implode(",\n", $items);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | API Call
+    |--------------------------------------------------------------------------
+    */
+
+    private function callApi(string $prompt): string
+    {
+        if (empty($this->apiKey)) {
+            throw new Exception('Pinat AI API key belum dikonfigurasi.');
+        }
+
+        $response = Http::withToken($this->apiKey)
+            ->timeout(60)
+            ->post("{$this->baseUrl}/chat/completions", [
+                'model'       => $this->model,
+                'messages'    => [
+                    [
+                        'role'    => 'user',
+                        'content' => $prompt,
+                    ],
+                ],
+                'temperature' => 0.7,
+                'max_tokens'  => 4096,
+            ]);
+
+        if (!$response->successful()) {
+            Log::error('Pinat AI API error', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            throw new Exception("AI API error: HTTP {$response->status()}");
+        }
+
+        $data = $response->json();
+
+        return $data['choices'][0]['message']['content'] ?? '';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response Parser
+    |--------------------------------------------------------------------------
+    */
+
+    private function parseResponse(string $rawContent): array
+    {
+        if (empty($rawContent)) {
+            throw new Exception('AI tidak mengembalikan respons.');
+        }
+
+        // Strip markdown code fences if present (```json ... ```)
+        $content = preg_replace('/^```(?:json)?\s*/i', '', trim($rawContent));
+        $content = preg_replace('/\s*```$/', '', $content);
+        $content = trim($content);
+
+        $decoded = json_decode($content, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('Pinat AI parse error', [
+                'raw'   => $rawContent,
+                'error' => json_last_error_msg(),
+            ]);
+            throw new Exception('Gagal memproses respons AI. Coba lagi.');
+        }
+
+        if (empty($decoded['questions']) || !is_array($decoded['questions'])) {
+            throw new Exception('AI tidak menghasilkan soal. Coba lagi.');
+        }
+
+        return [
+            'title'     => $decoded['title'] ?? 'Generated Challenge',
+            'content'   => $decoded['content'] ?? '',
+            'questions' => $decoded['questions'],
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Score Calculator (matches frontend calculate-score.ts logic)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Re-apply scores after parsing, matching the frontend's calculation logic.
+     */
+    private function applyScores(array $questions, string $type, int $maxScore, int $mcqCount, int $essayCount): array
+    {
+        if (empty($questions)) {
+            return $questions;
+        }
+
+        switch ($type) {
+            case 'multiple_choice':
+                $scoreEach = $mcqCount > 0 ? round($maxScore / $mcqCount, 2) : 0;
+                foreach ($questions as &$q) {
+                    $q['score'] = $scoreEach;
+                }
+                break;
+
+            case 'essay':
+                $scoreEach = $essayCount > 0 ? round($maxScore / $essayCount, 2) : 0;
+                foreach ($questions as &$q) {
+                    $q['score'] = $scoreEach;
+                }
+                break;
+
+            case 'mixed':
+                // MCQ gets 40%, essay gets 60% — same as frontend
+                $mcqTotal   = $maxScore * 0.4;
+                $essayTotal = $maxScore * 0.6;
+                $mcqScore   = $mcqCount > 0   ? round($mcqTotal / $mcqCount, 2)     : 0;
+                $essayScore = $essayCount > 0 ? round($essayTotal / $essayCount, 2) : 0;
+
+                foreach ($questions as &$q) {
+                    $q['score'] = $q['type'] === 'multiple_choice' ? $mcqScore : $essayScore;
+                }
+                break;
+        }
+
+        return $questions;
+    }
+}
