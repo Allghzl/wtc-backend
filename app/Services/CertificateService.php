@@ -84,22 +84,17 @@ class CertificateService
             $html = $this->defaultHtml($studentName, $trackTitle, $grade, $score, $date, $certNumber);
         }
 
-        $filename = "{$certNumber}.html";
-        $path     = "certificates/{$filename}";
+        $pdfPath = "certificates/{$certNumber}.pdf";
 
-        // Try DomPDF if available, fall back to HTML
-        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-            $pdf      = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-            $pdfPath  = "certificates/{$certNumber}.pdf";
+        // Generate PDF using DomPDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+            ->setPaper('a4', 'landscape')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
 
-            Storage::disk('public')->put($pdfPath, $pdf->output());
-
-            $cert->update(['pdf_path' => $pdfPath]);
-        } else {
-            Storage::disk('public')->put($path, $html);
-
-            $cert->update(['pdf_path' => $path]);
-        }
+        // Store on S3 / object storage
+        Storage::disk('s3')->put($pdfPath, $pdf->output(), 'private');
+        $cert->update(['pdf_path' => $pdfPath]);
     }
 
     /**
