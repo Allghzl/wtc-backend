@@ -159,11 +159,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/student-progress/tracks',             [StudentProgressController::class, 'tracks']);
         Route::get('/student-progress/tracks/{track}',     [StudentProgressController::class, 'trackDetail']);
 
-        // Certificate template (read) & admin certificate listing
-        Route::get('/certificate-template',                            [CertificateTemplateController::class, 'show']);
+        // Certificate admin listing
         Route::get('/admin/certificates',                              [CertificateController::class, 'adminIndex']);
         Route::get('/admin/certificates/profile/{profile}',            [CertificateController::class, 'profileCertificates']);
     });
+
+    // Certificate template — readable by all authenticated users (student needs it for viewer)
+    Route::get('/certificate-template', [CertificateTemplateController::class, 'show']);
 
     // Admin-only role operations
     Route::middleware('admin')->group(function () {
