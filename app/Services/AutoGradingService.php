@@ -71,7 +71,23 @@ class AutoGradingService
                 ];
             }
 
-            $submittedAnswers = $submittedContent['answers'];
+            // Normalize answers to a flat [questionIndex => answerKey] map.
+            // Supports two formats:
+            //   Old: ["B", "A", "C"]          (index = position in array)
+            //   New: [{questionIndex:0, answer:"B"}, ...]  (QuizGroupForm format)
+            $rawAnswers = $submittedContent['answers'];
+            $submittedAnswers = [];
+
+            foreach ($rawAnswers as $idx => $item) {
+                if (is_array($item) && isset($item['answer'])) {
+                    // New format — use questionIndex if present, otherwise array position
+                    $key = $item['questionIndex'] ?? $idx;
+                    $submittedAnswers[$key] = strtoupper($item['answer']);
+                } else {
+                    // Old format — plain string at array position
+                    $submittedAnswers[$idx] = strtoupper((string) $item);
+                }
+            }
 
             // Get questions from challenge metadata
             $metadata = $challenge->metadata;
@@ -111,21 +127,24 @@ class AutoGradingService
                 }
             }
 
-            // Generate feedback
-            $percentage = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0;
-            $feedback = "Jawaban benar: {$correctCount}/{$totalQuestions} ({$percentage}%)";
-
-            // Check passing score
+            // Build structured feedback
+            $percentage   = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0;
             $passingScore = $challenge->settings['passing_score'] ?? 70;
-            if ($percentage >= $passingScore) {
-                $feedback .= " - LULUS ✅";
-            } else {
-                $feedback .= " - BELUM LULUS ❌";
-            }
+            $passed       = $percentage >= $passingScore;
+
+            $feedback = json_encode([
+                'correct_answers'  => $correctCount,
+                'wrong_answers'    => $totalQuestions - $correctCount,
+                'total_answered'   => count($submittedAnswers),
+                'total_questions'  => $totalQuestions,
+                'percentage'       => $percentage,
+                'passing_score'    => $passingScore,
+                'passed'           => $passed,
+            ]);
 
             return [
-                'score' => $totalScore,
-                'status' => 'graded',
+                'score'    => $totalScore,
+                'status'   => 'graded',
                 'feedback' => $feedback,
             ];
 
