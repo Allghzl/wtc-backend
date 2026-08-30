@@ -58,19 +58,20 @@ class CertificateController extends Controller
             return $this->error('Unauthorized.', 403);
         }
 
-        if (!$certificate->pdf_path || !Storage::disk('public')->exists($certificate->pdf_path)) {
+        if (!$certificate->pdf_path || !Storage::disk('s3')->exists($certificate->pdf_path)) {
             // Regenerate on-the-fly
             $this->certificateService->generatePdf($certificate);
             $certificate->refresh();
         }
 
-        $fullPath = Storage::disk('public')->path($certificate->pdf_path);
-        $mime     = str_ends_with($certificate->pdf_path, '.pdf') ? 'application/pdf' : 'text/html';
+        // Return a short-lived signed URL (1 hour)
+        $url = Storage::disk('s3')->temporaryUrl(
+            $certificate->pdf_path,
+            now()->addHour(),
+            ['ResponseContentDisposition' => 'inline; filename="certificate-' . $certificate->certificate_number . '.pdf"']
+        );
 
-        return response()->file($fullPath, [
-            'Content-Type'        => $mime,
-            'Content-Disposition' => 'inline; filename="certificate-' . $certificate->certificate_number . '"',
-        ]);
+        return $this->success(['url' => $url], 'Download URL generated.');
     }
 
     /**
