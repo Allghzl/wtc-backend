@@ -29,11 +29,11 @@ class LessonAttachmentTest extends TestCase
         $teacherRole = Role::create(['name' => 'teacher']);
         $studentRole = Role::create(['name' => 'student']);
 
-        // Create users
-        $this->teacher = User::factory()->create();
+        // Create users with profiles
+        $this->teacher = User::factory()->withProfile()->create();
         $this->teacher->profile->roles()->attach($teacherRole);
 
-        $this->student = User::factory()->create();
+        $this->student = User::factory()->withProfile()->create();
         $this->student->profile->roles()->attach($studentRole);
 
         // Create lesson

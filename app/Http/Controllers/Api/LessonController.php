@@ -20,7 +20,7 @@ class LessonController extends Controller
      */
     public function index(LessonIndexRequest $request)
     {
-        $query = Lesson::query();
+        $query = Lesson::with(['attachments', 'creator.roles', 'creator.user']);
 
         // Filter by module_id if provided
         $query->when($request->input('module_id'), function ($q, $moduleId) {
@@ -81,7 +81,7 @@ class LessonController extends Controller
      */
     public function getByModule(Module $module)
     {
-        $lessons = $module->lessons()->orderBy('order')->get();
+        $lessons = $module->lessons()->with('attachments')->orderBy('order')->get();
 
         if ($lessons->isEmpty()) {
             return $this->error('No lessons found in this track', 404);
@@ -98,7 +98,15 @@ class LessonController extends Controller
      */
     public function store(LessonStoreRequest $request)
     {
-        $lesson = Lesson::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $lesson = Lesson::create($data);
+        $lesson->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new LessonResource($lesson),
@@ -112,6 +120,8 @@ class LessonController extends Controller
      */
     public function show(Lesson $lesson)
     {
+        $lesson->load(['attachments', 'creator.roles', 'creator.user']);
+
         return $this->success(
             new LessonResource($lesson),
             'Lesson retrieved successfully'
@@ -124,6 +134,7 @@ class LessonController extends Controller
     public function update(LessonUpdateRequest $request, Lesson $lesson)
     {
         $lesson->update($request->validated());
+        $lesson->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new LessonResource($lesson),

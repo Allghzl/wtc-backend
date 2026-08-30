@@ -14,6 +14,8 @@ class SubmissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $totalScore = ($this->auto_score ?? 0) + ($this->manual_score ?? 0);
+
         return [
             'id'                => $this->id,
             'attempt_number'    => $this->attempt_number,
@@ -24,7 +26,8 @@ class SubmissionResource extends JsonResource
             'file_url'          => $this->file_path ? $this->file_path : null,
             'auto_score'        => $this->auto_score,
             'manual_score'      => $this->manual_score,
-            'total_score'       => ($this->auto_score ?? 0) + ($this->manual_score ?? 0),
+            'score'             => $totalScore,      // Alias for FE compatibility
+            'total_score'       => $totalScore,      // Keep for backward compatibility
             'feedback'          => $this->feedback,
             'submitted_at'      => $this->submitted_at ? $this->submitted_at->format('Y-m-d H:i:s') : null,
             'created_at'        => $this->created_at->format('Y-m-d H:i:s'),

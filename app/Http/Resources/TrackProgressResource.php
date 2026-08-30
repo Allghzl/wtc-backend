@@ -23,6 +23,8 @@ class TrackProgressResource extends JsonResource
                 'total_modules' => $this->resource['progress']['total_modules'],
                 'completed_challenges' => $this->resource['progress']['completed_challenges'],
                 'total_challenges' => $this->resource['progress']['total_challenges'],
+                'completed_lessons' => $this->resource['progress']['completed_lessons'],
+                'total_lessons' => $this->resource['progress']['total_lessons'],
             ],
             'modules' => $this->resource['modules'] ?? [],
         ];

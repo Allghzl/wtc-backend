@@ -8,6 +8,7 @@ use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\ProfileResource;
 use App\Http\Resources\UserResource;
+use App\Services\AchievementService;
 use App\Services\AuthService;
 use App\Services\PinatJwtService;
 use App\Traits\ApiResponse;
@@ -23,6 +24,7 @@ class AuthController extends Controller
         protected AuthService $auth,
         protected PinatJwtService $pinatJwt,
         protected \App\Services\AvatarService $avatars,
+        protected AchievementService $achievementService,
     ) {}
 
     /**
@@ -87,6 +89,14 @@ class AuthController extends Controller
              */
             $result = $this->auth->syncPinat($payload);
 
+            try {
+                if ($result['profile']) {
+                    $this->achievementService->checkAndAward($result['profile'], 'first_login');
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Achievement first_login check failed on SSO', ['error' => $e->getMessage()]);
+            }
+
             return $this->success([
                 'user' => new UserResource($result['user']),
                 'profile' => new ProfileResource($result['profile']),
@@ -117,6 +127,14 @@ class AuthController extends Controller
 
             UserRegistered::dispatch($result['user']);
 
+            try {
+                if ($result['profile']) {
+                    $this->achievementService->checkAndAward($result['profile'], 'first_login');
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Achievement first_login check failed on register', ['error' => $e->getMessage()]);
+            }
+
             return $this->success([
                 'user' => new UserResource($result['user']),
                 'profile' => new ProfileResource($result['profile']),
@@ -139,6 +157,14 @@ class AuthController extends Controller
             $result = $this->auth->login(
                 $request->validated()
             );
+
+            try {
+                if ($result['profile']) {
+                    $this->achievementService->checkAndAward($result['profile'], 'first_login');
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Achievement first_login check failed on login', ['error' => $e->getMessage()]);
+            }
 
             return $this->success([
                 'user' => new UserResource($result['user']),

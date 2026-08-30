@@ -19,7 +19,7 @@ class TrackController extends Controller
      */
     public function index(TrackIndexRequest $request)
     {
-        $query = Track::withCount(['modules']);
+        $query = Track::with(['creator.roles', 'creator.user'])->withCount(['modules']);
 
         // Apply search filter
         $query->when($request->input('search'), function ($q, $search) {
@@ -68,11 +68,20 @@ class TrackController extends Controller
      */
     public function store(TrackStoreRequest $request)
     {
-        $track = Track::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $track = Track::create($data);
 
         if (!$track) {
             return $this->error('Failed to create track', 500);
         }
+
+        $track->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new TrackResource($track),
@@ -86,6 +95,9 @@ class TrackController extends Controller
      */
     public function show(Track $track)
     {
+        $track->load(['creator.roles', 'creator.user']);
+        $track->loadCount('modules');
+
         return $this->success(new TrackResource($track));
     }
 
@@ -95,6 +107,7 @@ class TrackController extends Controller
     public function update(TrackUpdateRequest $request, Track $track)
     {
         $track->update($request->validated());
+        $track->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new TrackResource($track),

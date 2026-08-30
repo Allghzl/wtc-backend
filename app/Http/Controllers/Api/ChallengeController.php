@@ -20,7 +20,7 @@ class ChallengeController extends Controller
      */
     public function index(ChallengeIndexRequest $request)
     {
-        $query = Challenge::query();
+        $query = Challenge::with(['creator.roles', 'creator.user']);
 
         // Filter by module_id if provided (challenges directly under a module, not under a lesson)
         $query->when($request->input('module_id'), function ($q, $moduleId) {
@@ -107,11 +107,20 @@ class ChallengeController extends Controller
      */
     public function store(ChallengeStoreRequest $request)
     {
-        $challenge = Challenge::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $challenge = Challenge::create($data);
 
         if (!$challenge) {
             return $this->error('Failed to create challenge', 500);
         }
+
+        $challenge->load(['creator.roles', 'creator.user']);
 
         return $this->success(new ChallengeResource($challenge), 'New challenge created successfully', 201);
     }
@@ -121,6 +130,7 @@ class ChallengeController extends Controller
      */
     public function show(Challenge $challenge)
     {
+        $challenge->load(['creator.roles', 'creator.user']);
         return $this->success(new ChallengeResource($challenge), 'Challenge detail retrieved successfully');
     }
 
@@ -130,6 +140,7 @@ class ChallengeController extends Controller
     public function update(ChallengeUpdateRequest $request, Challenge $challenge)
     {
         $challenge->update($request->validated());
+        $challenge->load(['creator.roles', 'creator.user']);
 
         return $this->success(new ChallengeResource($challenge), 'Challenge updated successfully');
     }

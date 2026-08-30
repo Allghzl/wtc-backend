@@ -1,0 +1,58 @@
+[
+  {
+    "key": "web-foundations",
+    "title": "Web Engineering Foundations",
+    "slug": "web-engineering-foundations",
+    "description": "Arsitektur web, HTTP, tooling, Git, debugging, dan cara berpikir engineering untuk membangun aplikasi modern.",
+    "order": 1
+  },
+  {
+    "key": "html-css-accessibility",
+    "title": "HTML, CSS, Accessibility & Tailwind",
+    "slug": "html-css-accessibility-tailwind",
+    "description": "Markup semantic, layout responsive, accessibility, CSS fundamentals, dan implementasi UI dengan Tailwind CSS.",
+    "order": 2
+  },
+  {
+    "key": "javascript-typescript-browser",
+    "title": "JavaScript, TypeScript & Browser Programming",
+    "slug": "javascript-typescript-browser",
+    "description": "Logika aplikasi, asynchronous programming, DOM, browser API, state machine, dan game client-side.",
+    "order": 3
+  },
+  {
+    "key": "react-frontend",
+    "title": "Frontend Engineering with React",
+    "slug": "frontend-engineering-react",
+    "description": "React, TypeScript, routing, form, API state, reusable UI, dan aplikasi frontend production-oriented.",
+    "order": 4
+  },
+  {
+    "key": "laravel-api",
+    "title": "Backend Engineering with Laravel",
+    "slug": "backend-engineering-laravel",
+    "description": "Laravel request lifecycle, Form Request, Eloquent, REST API, Resource, authorization, upload, dan testing.",
+    "order": 5
+  },
+  {
+    "key": "database-modeling",
+    "title": "Database, PostgreSQL & Data Modeling",
+    "slug": "database-postgresql-data-modeling",
+    "description": "Relational modeling, SQL, PostgreSQL, constraints, indexes, JSON, pagination, dan query optimization.",
+    "order": 6
+  },
+  {
+    "key": "security-delivery",
+    "title": "Security, Testing & Production Delivery",
+    "slug": "security-testing-production",
+    "description": "Authentication, authorization, web security, testing, Docker, deployment, observability, dan operational readiness.",
+    "order": 7
+  },
+  {
+    "key": "applied-projects",
+    "title": "Applied Web Projects & Capstone",
+    "slug": "applied-web-projects-capstone",
+    "description": "Project terpadu berdasarkan brief IndoRecipe, Indonesia PVZ, serta learning platform berbasis Laravel dan React.",
+    "order": 8
+  }
+]

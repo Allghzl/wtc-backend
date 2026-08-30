@@ -20,7 +20,7 @@ class ModuleController extends Controller
      */
     public function index(ModuleIndexRequest $request)
     {
-        $query = Module::query();
+        $query = Module::with(['creator.roles', 'creator.user']);
 
         // Apply existing track_id filter
         $query->when($request->input('track_id'), function ($q, $trackId) {
@@ -91,11 +91,20 @@ class ModuleController extends Controller
      */
     public function store(ModuleStoreRequest $request)
     {
-        $module = Module::create($request->validated());
+        $data = $request->validated();
+
+        // Set created_by to authenticated user's profile_id
+        if (auth()->check() && auth()->user()->profile) {
+            $data['created_by'] = auth()->user()->profile->id;
+        }
+
+        $module = Module::create($data);
 
         if (!$module) {
             return $this->error('Failed to create module', 500);
         }
+
+        $module->load(['creator.roles', 'creator.user']);
 
         return $this->success(
             new ModuleResource($module),
@@ -109,6 +118,7 @@ class ModuleController extends Controller
      */
     public function show(Module $module)
     {
+        $module->load(['creator.roles', 'creator.user']);
         return $this->success(new ModuleResource($module));
     }
 
@@ -118,6 +128,7 @@ class ModuleController extends Controller
     public function update(ModuleUpdateRequest $request, Module $module)
     {
         $module->update($request->validated());
+        $module->load(['creator.roles', 'creator.user']);
 
         return $this->success(new ModuleResource($module), 'Module updated successfully');
     }

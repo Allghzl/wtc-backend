@@ -1,0 +1,689 @@
+[
+  {
+    "key": "web-http",
+    "track_key": "web-foundations",
+    "title": "Web Architecture & HTTP",
+    "slug": "web-http",
+    "description": "Memahami sistem yang menjadi dasar framework.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "client-server",
+        "HTTP request-response",
+        "API contract",
+        "DevTools dan Git"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_BACKEND.docx",
+        "ACTUAL_MODULE_FRONTEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "engineering-workflow",
+    "track_key": "web-foundations",
+    "title": "Engineering Workflow",
+    "slug": "engineering-workflow",
+    "description": "Workflow praktis untuk membaca codebase dan menyelesaikan bug.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "terminal",
+        "Git",
+        "debugging",
+        "environment"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx",
+        "ACTUAL_MODULE_FRONTEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "api-design",
+    "track_key": "web-foundations",
+    "title": "API Design & Error Contract",
+    "slug": "api-design",
+    "description": "Mendesain API yang dapat dikonsumsi frontend secara konsisten.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "resource design",
+        "validation error",
+        "pagination",
+        "idempotency"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_BACKEND.docx",
+        "Request/*.php"
+      ]
+    }
+  },
+  {
+    "key": "semantic-html",
+    "track_key": "html-css-accessibility",
+    "title": "Semantic HTML & Accessibility",
+    "slug": "semantic-html",
+    "description": "Markup yang bermakna, keyboard-friendly, dan screen-reader friendly.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "semantic structure",
+        "forms",
+        "focus",
+        "ARIA"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx"
+      ]
+    }
+  },
+  {
+    "key": "css-layout",
+    "track_key": "html-css-accessibility",
+    "title": "CSS Layout & Responsive Design",
+    "slug": "css-layout",
+    "description": "Membangun layout stabil sebelum memakai utility framework.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "box model",
+        "flexbox",
+        "grid",
+        "responsive design"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx"
+      ]
+    }
+  },
+  {
+    "key": "tailwind-ui",
+    "track_key": "html-css-accessibility",
+    "title": "Tailwind UI Engineering",
+    "slug": "tailwind-ui",
+    "description": "Mengubah prinsip CSS menjadi component UI yang konsisten.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "utility classes",
+        "variants",
+        "responsive states",
+        "dark mode"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx",
+        "ACTUAL_MODULE_FRONTEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "js-core",
+    "track_key": "javascript-typescript-browser",
+    "title": "JavaScript Application Logic",
+    "slug": "js-core",
+    "description": "Logika modern untuk aplikasi, bukan sekadar syntax.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "types",
+        "functions",
+        "objects",
+        "modules"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx"
+      ]
+    }
+  },
+  {
+    "key": "async-browser",
+    "track_key": "javascript-typescript-browser",
+    "title": "Async JavaScript & Browser APIs",
+    "slug": "async-browser",
+    "description": "Request, storage, timer, dan lifecycle browser.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "Promise",
+        "fetch",
+        "storage",
+        "cleanup"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx"
+      ]
+    }
+  },
+  {
+    "key": "game-state",
+    "track_key": "javascript-typescript-browser",
+    "title": "Client-Side State & Game Programming",
+    "slug": "game-state",
+    "description": "State machine dan game loop untuk project Indonesia PVZ.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "state machine",
+        "timer",
+        "spawn",
+        "collision"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx"
+      ]
+    }
+  },
+  {
+    "key": "react-core",
+    "track_key": "react-frontend",
+    "title": "React Component Architecture",
+    "slug": "react-core",
+    "description": "Membuat component yang memiliki boundary dan aliran data jelas.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "component",
+        "props",
+        "state",
+        "hooks"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_FRONTEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "react-routing",
+    "track_key": "react-frontend",
+    "title": "Routing & Page Composition",
+    "slug": "react-routing",
+    "description": "Membangun halaman multi-route dengan parameter slug.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "route params",
+        "nested page",
+        "not found",
+        "navigation"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_FRONTEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "frontend-data",
+    "track_key": "react-frontend",
+    "title": "Frontend Data & Form Engineering",
+    "slug": "frontend-data",
+    "description": "Menghubungkan React dengan API secara resilient.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "loading/error/empty",
+        "forms",
+        "422 mapping",
+        "pagination"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_FRONTEND.docx",
+        "Request/*.php"
+      ]
+    }
+  },
+  {
+    "key": "laravel-core",
+    "track_key": "laravel-api",
+    "title": "Laravel Request Lifecycle",
+    "slug": "laravel-core",
+    "description": "Memahami route sampai JSON response.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "routes",
+        "middleware",
+        "controllers",
+        "Form Request"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_BACKEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "laravel-data",
+    "track_key": "laravel-api",
+    "title": "Migrations, Eloquent & API Resources",
+    "slug": "laravel-data",
+    "description": "Membangun persistence layer dan response contract.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "migration",
+        "relationship",
+        "query",
+        "resource"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "migration files",
+        "ACTUAL_MODULE_BACKEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "laravel-features",
+    "track_key": "laravel-api",
+    "title": "Auth, Upload & Feature Testing",
+    "slug": "laravel-features",
+    "description": "Membangun endpoint yang aman dan dapat diuji.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "authorization",
+        "file upload",
+        "roles",
+        "HTTP tests"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "Request/*.php",
+        "CHALLENGE_METADATA_GUIDE.md"
+      ]
+    }
+  },
+  {
+    "key": "relational",
+    "track_key": "database-modeling",
+    "title": "Relational Data Modeling",
+    "slug": "relational",
+    "description": "Memetakan domain ke tabel yang konsisten.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "keys",
+        "relationships",
+        "normalization",
+        "constraints"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "migration files"
+      ]
+    }
+  },
+  {
+    "key": "sql-query",
+    "track_key": "database-modeling",
+    "title": "SQL, Filtering & Pagination",
+    "slug": "sql-query",
+    "description": "Menulis query yang benar untuk kebutuhan UI.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "where",
+        "join",
+        "aggregate",
+        "pagination"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "migration files",
+        "Request/*.php"
+      ]
+    }
+  },
+  {
+    "key": "performance",
+    "track_key": "database-modeling",
+    "title": "Integrity & Query Performance",
+    "slug": "performance",
+    "description": "Mencegah data rusak dan query boros.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "indexes",
+        "N+1",
+        "transactions",
+        "JSON/text"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "migration files"
+      ]
+    }
+  },
+  {
+    "key": "web-security",
+    "track_key": "security-delivery",
+    "title": "Web Security Fundamentals",
+    "slug": "web-security",
+    "description": "Melindungi trust boundary aplikasi.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "XSS",
+        "CSRF",
+        "CORS",
+        "injection"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "Request/*.php",
+        "CHALLENGE_METADATA_GUIDE.md"
+      ]
+    }
+  },
+  {
+    "key": "testing",
+    "track_key": "security-delivery",
+    "title": "Testing & Debugging Discipline",
+    "slug": "testing",
+    "description": "Menguji behavior, edge case, dan regression.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "unit",
+        "feature",
+        "frontend checks",
+        "test data"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_BACKEND.docx",
+        "Request/*.php"
+      ]
+    }
+  },
+  {
+    "key": "delivery",
+    "track_key": "security-delivery",
+    "title": "Docker, Deployment & Operations",
+    "slug": "delivery",
+    "description": "Mengirim aplikasi dengan konfigurasi dan rollback yang jelas.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "environment",
+        "Docker",
+        "CI",
+        "backup/logging"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx",
+        "ACTUAL_MODULE_BACKEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "indorecipe-backend",
+    "track_key": "applied-projects",
+    "title": "Project: IndoRecipe API",
+    "slug": "indorecipe-backend",
+    "description": "Implementasi backend sesuai brief lomba.",
+    "order": 1,
+    "metadata": {
+      "learning_outcomes": [
+        "categories",
+        "recipes",
+        "ratings",
+        "comments"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_BACKEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "indorecipe-frontend",
+    "track_key": "applied-projects",
+    "title": "Project: IndoRecipe React App",
+    "slug": "indorecipe-frontend",
+    "description": "Implementasi frontend sesuai brief lomba.",
+    "order": 2,
+    "metadata": {
+      "learning_outcomes": [
+        "discover",
+        "detail",
+        "auth",
+        "profile"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_FRONTEND.docx"
+      ]
+    }
+  },
+  {
+    "key": "indonesia-pvz",
+    "track_key": "applied-projects",
+    "title": "Project: Indonesia PVZ",
+    "slug": "indonesia-pvz",
+    "description": "Implementasi game client-side sesuai brief.",
+    "order": 3,
+    "metadata": {
+      "learning_outcomes": [
+        "welcome page",
+        "plants/zombies",
+        "levels",
+        "responsive UI"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "ACTUAL_MODULE_CLIENT_SIDE.docx"
+      ]
+    }
+  },
+  {
+    "key": "learning-platform",
+    "track_key": "applied-projects",
+    "title": "Project: Learning Platform",
+    "slug": "learning-platform",
+    "description": "Implementasi tracks, modules, lessons, challenges, dan progress.",
+    "order": 4,
+    "metadata": {
+      "learning_outcomes": [
+        "Lexical lessons",
+        "challenge metadata",
+        "submission",
+        "progress"
+      ],
+      "stack": [
+        "Laravel",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "PostgreSQL",
+        "Git"
+      ],
+      "source_materials": [
+        "CHALLENGE_METADATA_GUIDE.md",
+        "Request/*.php"
+      ]
+    }
+  }
+]

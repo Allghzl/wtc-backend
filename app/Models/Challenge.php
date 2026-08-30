@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Challenge extends Model
+class Challenge extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+
     protected $fillable = [
         'module_id',
         'lesson_id',
@@ -22,6 +26,7 @@ class Challenge extends Model
         'max_score',
         'allowed_attempts',
         'points',
+        'created_by',
     ];
 
     protected static function boot()
@@ -73,5 +78,16 @@ class Challenge extends Model
     public function attachments()
     {
         return $this->hasMany(Attachment::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creator Relationship
+    |--------------------------------------------------------------------------
+    */
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class, 'created_by');
     }
 }

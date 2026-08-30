@@ -15,19 +15,36 @@ class ChallengeUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        return $this->user()?->hasRole('admin') || $this->user()?->hasRole('teacher');
     }
 
     protected function prepareForValidation(): void
     {
-        // Merge defaults for optional fields to match StoreRequest behavior
-        $this->merge([
-            'settings' => $this->input('settings') ?? $this->route('challenge')->settings ?? [],
-            'metadata' => $this->input('metadata') ?? $this->route('challenge')->metadata ?? [],
-            'order' => $this->input('order') ?? $this->route('challenge')->order,
-            'points' => $this->input('points') ?? $this->route('challenge')->points,
-            'allowed_attempts' => $this->input('allowed_attempts') ?? $this->route('challenge')->allowed_attempts,
-        ]);
+        // Only merge defaults for fields that are NOT present in request
+        // This allows nullable fields (like allowed_attempts) to be explicitly set to null
+        $mergeData = [];
+
+        if (!$this->has('settings')) {
+            $mergeData['settings'] = $this->route('challenge')->settings ?? [];
+        }
+
+        if (!$this->has('metadata')) {
+            $mergeData['metadata'] = $this->route('challenge')->metadata ?? [];
+        }
+
+        if (!$this->has('order')) {
+            $mergeData['order'] = $this->route('challenge')->order;
+        }
+
+        if (!$this->has('points')) {
+            $mergeData['points'] = $this->route('challenge')->points;
+        }
+
+        if (!$this->has('allowed_attempts')) {
+            $mergeData['allowed_attempts'] = $this->route('challenge')->allowed_attempts;
+        }
+
+        $this->merge($mergeData);
     }
 
     /**
@@ -85,7 +102,7 @@ class ChallengeUpdateRequest extends FormRequest
                 'sometimes',
                 'required',
                 'string',
-                'in:multiple_choice,fill_blank,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
+                'in:multiple_choice,fill_blank,essay,code_editor,file_upload,github_submission,docker_project,timed_exam,quiz_group',
             ],
 
             'difficulty' => [
@@ -160,8 +177,8 @@ class ChallengeUpdateRequest extends FormRequest
             ],
 
             'allowed_attempts' => [
+                'nullable',
                 'sometimes',
-                'required',
                 'integer',
                 'min:1',
             ],
@@ -184,7 +201,7 @@ class ChallengeUpdateRequest extends FormRequest
             'Challenge tidak boleh terikat ke Module dan Lesson sekaligus.',
 
             'allowed_attempts.min' =>
-            'Jumlah percobaan minimal adalah 1.',
+            'Jumlah percobaan minimal adalah 1. Kosongkan untuk unlimited attempts.',
         ];
     }
 }

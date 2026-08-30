@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmissionStoreRequest;
 use App\Http\Requests\SubmissionUpdateRequest;
 use App\Http\Resources\SubmissionResource;
+use App\Models\Certificate;
 use App\Models\Challenge;
 use App\Models\Submission;
+use App\Services\CertificateService;
 use App\Services\SubmissionService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -21,7 +24,9 @@ class SubmissionController extends Controller
     use ApiResponse;
 
     public function __construct(
-        protected SubmissionService $submissionService
+        protected SubmissionService $submissionService,
+        protected \App\Services\PointService $pointService,
+        protected CertificateService $certificateService
     ) {}
 
     /**
@@ -169,16 +174,6 @@ class SubmissionController extends Controller
         SubmissionUpdateRequest $request,
         Submission $submission
     ): JsonResponse {
-        $user = $request->user();
-
-        // Authorization: Only admins and teachers can grade submissions
-        if (!($user->hasRole('admin') || $user->hasRole('teacher'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to update this submission.',
-            ], 403);
-        }
-
         $submission = $this->submissionService->updateSubmission(
             $submission,
             $request->validated()
@@ -187,6 +182,41 @@ class SubmissionController extends Controller
         $totalScore =
             ($submission->auto_score ?? 0)
             + ($submission->manual_score ?? 0);
+
+        // Award points if submission is graded/reviewed
+        if (in_array($submission->status, ['graded', 'reviewed']) && $submission->profile) {
+            $challenge = $submission->challenge;
+            $this->pointService->awardSubmissionPoints(
+                $submission->profile,
+                $submission->id,
+                $totalScore,
+                $challenge->max_score ?? 100,
+                $challenge->title ?? 'Challenge'
+            );
+
+            // Certificate upgrade check — if a cert already exists for the track,
+            // recalculate the grade and flag it as update_available when improved
+            try {
+                $submission->load('challenge.module.track');
+                $track = $submission->challenge?->module?->track
+                    ?? $submission->challenge?->lesson?->module?->track;
+
+                if ($track) {
+                    $existingCert = Certificate::where('profile_id', $submission->profile->id)
+                        ->where('track_id', $track->id)
+                        ->first();
+
+                    if ($existingCert) {
+                        $this->certificateService->checkForUpgrade($submission->profile, $track);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::error('Certificate upgrade check failed in SubmissionController', [
+                    'error'         => $e->getMessage(),
+                    'submission_id' => $submission->id,
+                ]);
+            }
+        }
 
         return response()->json([
             'success' => true,

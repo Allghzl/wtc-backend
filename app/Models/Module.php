@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Module extends Model
+class Module extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
         'title',
@@ -16,7 +18,8 @@ class Module extends Model
         'description',
         'metadata',
         'order',
-        'track_id'
+        'track_id',
+        'created_by'
     ];
 
     protected function casts(): array
@@ -60,5 +63,16 @@ class Module extends Model
     public function challenges()
     {
         return $this->hasMany(Challenge::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creator Relationship
+    |--------------------------------------------------------------------------
+    */
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class, 'created_by');
     }
 }
