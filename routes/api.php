@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TeacherController;
+use App\Http\Controllers\Api\AchievementController;
+use App\Http\Controllers\Api\CertificateController;
+use App\Http\Controllers\Api\CertificateTemplateController;
 use App\Http\Controllers\Api\ChallengeAttachmentController;
 use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\EnrollmentController;
@@ -13,7 +16,7 @@ use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\LessonCompletionController;
 use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
-
+use App\Http\Controllers\Api\ProfileBadgeController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\StudentProgressController;
@@ -97,6 +100,21 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/leaderboard', [LeaderboardController::class, 'index']);
     Route::get('/profiles/{profile}/points-history', [LeaderboardController::class, 'pointsHistory']);
 
+    // Student certificates
+    Route::get('/student/certificates',                                [CertificateController::class, 'studentIndex']);
+    Route::get('/student/certificates/{certificate}/download',         [CertificateController::class, 'download']);
+    Route::post('/student/certificates/{certificate}/update',          [CertificateController::class, 'update']);
+    Route::post('/student/certificates/{certificate}/feedback',        [CertificateController::class, 'feedback']);
+
+    // Achievements (any auth)
+    Route::get('/achievements',                                        [AchievementController::class, 'publicIndex']);
+
+    // Profile badges & achievements
+    Route::get('/profiles/{profile}/badges',                           [ProfileBadgeController::class, 'index']);
+    Route::post('/profiles/{profile}/badges',                          [ProfileBadgeController::class, 'store']);
+    Route::delete('/profiles/{profile}/badges/{achievementId}',        [ProfileBadgeController::class, 'destroy']);
+    Route::get('/profiles/{profile}/achievements',                     [ProfileBadgeController::class, 'myAchievements']);
+
     // Profile Management
     Route::get('/profiles', [ProfileController::class, 'index']);
     Route::get('/profiles/{profile}', [ProfileController::class, 'show']);
@@ -140,6 +158,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/student-progress/profiles/{profile}', [StudentProgressController::class, 'profileDetail']);
         Route::get('/student-progress/tracks',             [StudentProgressController::class, 'tracks']);
         Route::get('/student-progress/tracks/{track}',     [StudentProgressController::class, 'trackDetail']);
+
+        // Certificate template (read) & admin certificate listing
+        Route::get('/certificate-template',                            [CertificateTemplateController::class, 'show']);
+        Route::get('/admin/certificates',                              [CertificateController::class, 'adminIndex']);
+        Route::get('/admin/certificates/profile/{profile}',            [CertificateController::class, 'profileCertificates']);
     });
 
     // Admin-only role operations
@@ -163,8 +186,21 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/admin/modules/{id}/restore', [AuditLogController::class, 'restoreModule']);
         Route::post('/admin/lessons/{id}/restore', [AuditLogController::class, 'restoreLesson']);
         Route::post('/admin/challenges/{id}/restore', [AuditLogController::class, 'restoreChallenge']);
+
+        // Achievement management
+        Route::get('/admin/achievements',                              [AchievementController::class, 'index']);
+        Route::post('/admin/achievements',                             [AchievementController::class, 'store']);
+        Route::put('/admin/achievements/{achievement}',                [AchievementController::class, 'update']);
+        Route::delete('/admin/achievements/{achievement}',             [AchievementController::class, 'destroy']);
+        Route::patch('/admin/achievements/{achievement}/toggle',       [AchievementController::class, 'toggle']);
+
+        // Certificate template upsert
+        Route::post('/admin/certificate-template',                     [CertificateTemplateController::class, 'store']);
     });
 });
+
+// Public certificate verification — no auth required
+Route::get('/public/verify/{code}', [CertificateController::class, 'verify']);
 
 
 
