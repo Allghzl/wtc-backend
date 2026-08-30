@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Certificate;
 use App\Models\LessonCompletion;
 use App\Models\Profile;
 use App\Models\Track;
@@ -312,10 +313,25 @@ class StudentProgressController extends Controller
             ->groupBy('profile_id')
             ->pluck('cnt', 'profile_id');
 
-        $profiles = $enrollments->map(function ($enrollment) use ($totalLessons, $completedMap) {
+        // Batch-load certificates for this track so we avoid N+1 queries
+        $certificateMap = Certificate::where('track_id', $track->id)
+            ->whereIn('profile_id', $profileIds)
+            ->get()
+            ->keyBy('profile_id');
+
+        $profiles = $enrollments->map(function ($enrollment) use ($totalLessons, $completedMap, $certificateMap) {
             $profile     = $enrollment->profile;
             $completed   = $completedMap[$profile->id] ?? 0;
             $progressPct = $totalLessons > 0 ? round(($completed / $totalLessons) * 100) : 0;
+
+            $cert = $certificateMap->get($profile->id);
+            $certificateStatus = $cert ? [
+                'grade'              => $cert->grade,
+                'grade_score'        => $cert->grade_score,
+                'status'             => $cert->status,
+                'issued_at'          => $cert->issued_at,
+                'certificate_number' => $cert->certificate_number,
+            ] : null;
 
             return [
                 'id'                  => $profile->id,
@@ -329,6 +345,7 @@ class StudentProgressController extends Controller
                 'progress_percentage' => $progressPct,
                 'status'              => $enrollment->status === 'completed' ? 'completed' : 'in_progress',
                 'enrolled_at'         => $enrollment->enrolled_at,
+                'certificate_status'  => $certificateStatus,
             ];
         });
 

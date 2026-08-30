@@ -68,6 +68,12 @@ class LessonCompletionController extends Controller
     private function handleTrackCompletion(\App\Models\Profile $profile, Lesson $lesson): void
     {
         try {
+            // Fire first_login achievement if this is the first lesson this profile has ever completed
+            $totalCompletions = $profile->lessonCompletions()->count();
+            if ($totalCompletions === 1) {
+                $this->achievementService->checkAndAward($profile, 'first_login');
+            }
+
             // Walk up: lesson -> module -> track
             $lesson->loadMissing('module.track');
             $track = $lesson->module?->track;
