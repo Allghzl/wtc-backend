@@ -65,10 +65,12 @@ class Certificate extends Model
     */
 
     /**
-     * Convert a numeric score (0-100) to a letter grade.
+     * Convert a numeric score (0–100) to a letter grade.
+     * Returns "-" when score is null (track has no challenges).
      */
-    public static function gradeLabel(float $score): string
+    public static function gradeLabel(?float $score): string
     {
+        if ($score === null) return '-';
         return match (true) {
             $score >= 95 => 'A+',
             $score >= 90 => 'A',

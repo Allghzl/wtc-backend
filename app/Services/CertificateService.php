@@ -59,7 +59,7 @@ class CertificateService
         $studentName = $cert->profile->display_name ?? $cert->profile->nickname ?? 'Student';
         $trackTitle  = $cert->track->title ?? 'Track';
         $grade       = $cert->grade;
-        $score       = number_format($cert->grade_score, 1);
+        $score       = $cert->grade_score !== null ? number_format($cert->grade_score, 1) : '-';
         $date        = $cert->issued_at ? $cert->issued_at->format('d F Y') : now()->format('d F Y');
         $certNumber  = $cert->certificate_number;
 

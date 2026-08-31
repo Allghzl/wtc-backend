@@ -17,15 +17,20 @@ class GradeCalculatorService
      *
      * Returns a float between 0 and 100. Returns 0 when no graded submissions exist.
      */
-    public function calculateTrackGrade(Profile $profile, Track $track): float
+    /**
+     * Returns null when the track has no challenges at all (grade should show as "-").
+     * Returns 0.0 when challenges exist but none have been graded yet.
+     */
+    public function calculateTrackGrade(Profile $profile, Track $track): ?float
     {
         // Load all modules with their challenges eagerly
         $track->loadMissing('modules.challenges');
 
         $challenges = $track->modules->flatMap(fn ($module) => $module->challenges);
 
+        // No challenges in this track — grade is meaningless, return null
         if ($challenges->isEmpty()) {
-            return 0.0;
+            return null;
         }
 
         $challengeIds = $challenges->pluck('id');
