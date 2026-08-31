@@ -1,0 +1,57 @@
+# Version control
+.git
+.github
+.gitignore
+.gitattributes
+
+# Environment / secrets — never bake into image
+.env
+.env.*
+!.env.example
+
+# PHP / Composer
+vendor
+
+# Node (not needed in production API image)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Laravel runtime directories (recreated at container start)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+
+# Tests
+tests
+phpunit.xml
+phpunit.xml.dist
+.phpunit.result.cache
+.phpunit.cache
+
+# Dev tooling
+.pint.json
+psalm.xml
+phpstan.neon
+.editorconfig
+.php-cs-fixer.php
+
+# IDE / OS
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker files themselves (no need to COPY into image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+docker-entrypoint.sh
+
+# Docs / misc
+README.md
+CHANGELOG.md

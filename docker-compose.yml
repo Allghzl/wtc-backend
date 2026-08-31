@@ -1,0 +1,67 @@
+services:
+  wtc-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: build
+    restart: unless-stopped
+
+    ports:
+      - "${BACKEND_PORT:-30001}:8000"
+
+    environment:
+      # ── Application ────────────────────────────────────────────────────────
+      APP_NAME: "${APP_NAME:-WTC Backend}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "${APP_KEY}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://localhost:30001}"
+
+      APP_LOCALE: "${APP_LOCALE:-en}"
+      APP_FALLBACK_LOCALE: "${APP_FALLBACK_LOCALE:-en}"
+
+      # ── Database (PostgreSQL on host) ───────────────────────────────────────
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "${DB_HOST:-192.168.1.20}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_DATABASE: "${DB_DATABASE}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+
+      # ── Logging ────────────────────────────────────────────────────────────
+      LOG_CHANNEL: "${LOG_CHANNEL:-stack}"
+      LOG_STACK: "${LOG_STACK:-stderr}"
+      LOG_LEVEL: "${LOG_LEVEL:-warning}"
+
+      # ── Session / Cache / Queue (all database-backed, no Redis needed) ──────
+      SESSION_DRIVER: "${SESSION_DRIVER:-database}"
+      SESSION_LIFETIME: "${SESSION_LIFETIME:-120}"
+      CACHE_STORE: "${CACHE_STORE:-database}"
+      QUEUE_CONNECTION: "${QUEUE_CONNECTION:-database}"
+
+      # ── Filesystem / S3 (MinIO-compatible) ─────────────────────────────────
+      FILESYSTEM_DISK: "${FILESYSTEM_DISK:-s3}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-us-east-1}"
+      AWS_BUCKET: "${AWS_BUCKET}"
+      AWS_ENDPOINT: "${AWS_ENDPOINT:-https://s3.pinat.nl}"
+      AWS_USE_PATH_STYLE_ENDPOINT: "${AWS_USE_PATH_STYLE_ENDPOINT:-true}"
+
+      # ── PinatAuth (JWT / JWKS) ──────────────────────────────────────────────
+      PINAT_AUTHURL: "${PINAT_AUTHURL:-https://auth.pinat.nl}"
+
+      # ── Pinat AI (challenge generation) ────────────────────────────────────
+      PINAT_AI_API_KEY: "${PINAT_AI_API_KEY}"
+      PINAT_AI_BASE_URL: "${PINAT_AI_BASE_URL:-https://api.pinat.nl/v1}"
+      PINAT_AI_MODEL: "${PINAT_AI_MODEL:-kr/deepseek-3.2}"
+
+      # ── Misc ───────────────────────────────────────────────────────────────
+      BCRYPT_ROUNDS: "${BCRYPT_ROUNDS:-12}"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
