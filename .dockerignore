@@ -46,11 +46,10 @@ phpstan.neon
 .DS_Store
 Thumbs.db
 
-# Docker files themselves (no need to COPY into image)
+# Docker files themselves
 Dockerfile
 docker-compose.yml
 .dockerignore
-docker-entrypoint.sh
 
 # Docs / misc
 README.md
