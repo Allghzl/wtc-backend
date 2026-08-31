@@ -20,6 +20,7 @@ RUN apk add --no-cache \
     openssl-dev \
     postgresql-dev
 
+# Configure and install PHP extensions
 RUN docker-php-ext-configure gd \
     --with-freetype \
     --with-jpeg \
@@ -43,15 +44,22 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy only dependency manifests first for better layer caching
+# Copy dependency manifests first for better Docker layer caching
 COPY composer.json composer.lock ./
 
-# Install production dependencies only
-RUN composer install \
+# Composer settings
+#
+# GitHub codeload has previously returned HTTP/2 400 from this host.
+# Force Git HTTP/1.1 and use source installs instead of dist ZIP files.
+ENV COMPOSER_PROCESS_TIMEOUT=600
+ENV COMPOSER_MAX_PARALLEL_HTTP=1
+
+RUN git config --global http.version HTTP/1.1 && \
+    composer install \
     --no-dev \
     --no-interaction \
     --no-progress \
-    --prefer-dist \
+    --prefer-source \
     --optimize-autoloader \
     --no-scripts
 
@@ -61,6 +69,7 @@ RUN composer install \
 # ─────────────────────────────────────────────────────────────
 FROM php:8.3-cli-alpine AS production
 
+# Runtime dependencies only
 RUN apk add --no-cache \
     curl \
     libpng \
@@ -73,7 +82,7 @@ RUN apk add --no-cache \
     libxml2 \
     postgresql-libs
 
-# Copy compiled PHP extensions and their config from build stage
+# Copy compiled PHP extensions and extension configs from builder
 COPY --from=vendor /usr/local/lib/php/extensions /usr/local/lib/php/extensions
 COPY --from=vendor /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 
@@ -86,13 +95,13 @@ RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.
 
 WORKDIR /var/www/html
 
-# Copy application source
+# Copy Laravel source
 COPY . .
 
-# Copy Composer vendor directory from build stage
+# Copy production Composer dependencies
 COPY --from=vendor /app/vendor ./vendor
 
-# Ensure Laravel runtime directories exist and are writable
+# Ensure Laravel runtime directories exist
 RUN mkdir -p \
     storage/framework/cache/data \
     storage/framework/sessions \
@@ -101,7 +110,7 @@ RUN mkdir -p \
     bootstrap/cache && \
     chmod -R 775 storage bootstrap/cache
 
-# Copy entrypoint
+# Copy container entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
