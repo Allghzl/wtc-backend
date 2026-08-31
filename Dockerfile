@@ -3,7 +3,6 @@
 # ─────────────────────────────────────────────────────────────
 FROM php:8.3-cli-alpine AS vendor
 
-# Install system packages required to build PHP extensions
 RUN apk add --no-cache \
     bash \
     curl \
@@ -12,6 +11,7 @@ RUN apk add --no-cache \
     $PHPIZE_DEPS \
     libpng-dev \
     libjpeg-turbo-dev \
+    libwebp-dev \
     freetype-dev \
     libzip-dev \
     icu-dev \
@@ -20,19 +20,10 @@ RUN apk add --no-cache \
     openssl-dev \
     postgresql-dev
 
-# Install PHP extensions
-#
-# - pdo_pgsql : PostgreSQL
-# - gd        : DomPDF + Intervention Image
-# - zip       : ZIP support
-# - mbstring  : Laravel + DomPDF
-# - xml/dom   : XML / HTML parsing
-# - intl      : Internationalization
-# - bcmath    : Arbitrary precision math
-# - opcache   : Production opcode cache
-# - fileinfo  : MIME/file detection
-# - redis     : Laravel Redis via phpredis
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+RUN docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg \
+    --with-webp && \
     docker-php-ext-install -j$(nproc) \
     pdo_pgsql \
     gd \
@@ -70,11 +61,11 @@ RUN composer install \
 # ─────────────────────────────────────────────────────────────
 FROM php:8.3-cli-alpine AS production
 
-# Runtime system packages required by PHP extensions
 RUN apk add --no-cache \
     curl \
     libpng \
     libjpeg-turbo \
+    libwebp \
     freetype \
     libzip \
     icu-libs \
