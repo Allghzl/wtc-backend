@@ -308,7 +308,7 @@ class AuditLogController extends Controller
      */
     public function trashedTracks(Request $request): JsonResponse
     {
-        $items = Track::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        $items = Track::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
         return $this->successWithPagination(
             TrackResource::collection($items),
             'Trashed tracks retrieved successfully.',
@@ -316,12 +316,9 @@ class AuditLogController extends Controller
         );
     }
 
-    /**
-     * List soft-deleted modules (admin only).
-     */
     public function trashedModules(Request $request): JsonResponse
     {
-        $items = Module::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        $items = Module::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
         return $this->successWithPagination(
             ModuleResource::collection($items),
             'Trashed modules retrieved successfully.',
@@ -329,12 +326,9 @@ class AuditLogController extends Controller
         );
     }
 
-    /**
-     * List soft-deleted lessons (admin only).
-     */
     public function trashedLessons(Request $request): JsonResponse
     {
-        $items = Lesson::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        $items = Lesson::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
         return $this->successWithPagination(
             LessonResource::collection($items),
             'Trashed lessons retrieved successfully.',
@@ -342,12 +336,9 @@ class AuditLogController extends Controller
         );
     }
 
-    /**
-     * List soft-deleted challenges (admin only).
-     */
     public function trashedChallenges(Request $request): JsonResponse
     {
-        $items = Challenge::onlyTrashed()->orderByDesc('deleted_at')->paginate(20);
+        $items = Challenge::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
         return $this->successWithPagination(
             ChallengeResource::collection($items),
             'Trashed challenges retrieved successfully.',
