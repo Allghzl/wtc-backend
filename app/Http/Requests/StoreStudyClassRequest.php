@@ -29,6 +29,10 @@ class StoreStudyClassRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:study_classes,name'],
+            'description' => ['nullable', 'string'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'semester' => ['nullable', 'string', 'max:20'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\AchievementController;
 use App\Http\Controllers\Api\CertificateController;
@@ -31,6 +32,13 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/auth/sso', [AuthController::class, 'sso']);
+
+// Email verification — token-based, no auth required
+Route::get('/email/verify', [EmailVerificationController::class, 'verify']);
+
+// Resend verification — auth required, no verified.email check
+Route::post('/email/verify/resend', [EmailVerificationController::class, 'resend'])
+    ->middleware('auth:sanctum');
 
 Route::get(
     '/user',
@@ -94,6 +102,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::delete('/challenges/{challenge}', [ChallengeController::class, 'destroy'])->middleware('teacher_or_admin');
     Route::apiResource('study-classes', StudyClassController::class);
 
+    // Study class — additional endpoints
+    Route::get('/my/study-class', [StudyClassController::class, 'myClass']);
+    Route::post('/study-classes/{id}/join', [StudyClassController::class, 'joinClass']);
+    Route::patch('/study-classes/{id}/toggle', [StudyClassController::class, 'toggle'])->middleware('teacher_or_admin');
+    Route::post('/study-classes/{id}/tracks/{track}', [StudyClassController::class, 'assignTrack'])->middleware('teacher_or_admin');
+    Route::delete('/study-classes/{id}/tracks/{track}', [StudyClassController::class, 'removeTrack'])->middleware('teacher_or_admin');
+
     Route::get('/me', [AuthController::class, 'me']);
 
     // Leaderboard
@@ -125,14 +140,18 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::delete('/profiles/{profile}/avatar', [ProfileController::class, 'deleteAvatar']);
 
     // Role Management
-    Route::get('/profiles/{profile}/roles', [ProfileController::class, 'getRoles']);
-    Route::post('/profiles/{profile}/roles', [ProfileController::class, 'assignRole']);
-    Route::delete('/profiles/{profile}/roles/{role}', [ProfileController::class, 'removeRole']);
+    Route::get('/profiles/{profile}/roles', [ProfileController::class, 'getRoles'])->middleware('teacher_or_admin');
+    Route::middleware('admin')->group(function () {
+        Route::post('/profiles/{profile}/roles', [ProfileController::class, 'assignRole']);
+        Route::delete('/profiles/{profile}/roles/{role}', [ProfileController::class, 'removeRole']);
+    });
 
     // User Management
-    Route::get('/users/stats', [UserController::class, 'stats']);
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{user}', [UserController::class, 'show']);
+    Route::middleware('teacher_or_admin')->group(function () {
+        Route::get('/users/stats', [UserController::class, 'stats']);
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{user}', [UserController::class, 'show']);
+    });
 
     // Role CRUD
     Route::get('/roles', [RoleController::class, 'index']);
@@ -173,6 +192,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('/roles/{role}', [RoleController::class, 'update']);
         Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
 
+        // User deletion — permanently removes user, profile, and all associated data
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
         /*
         |--------------------------------------------------------------------------
         | Admin-Only Restore Endpoints
@@ -204,16 +226,3 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 // Public certificate verification — no auth required
 Route::get('/public/verify/{code}', [CertificateController::class, 'verify']);
 
-
-
-Route::get('/debug/token', function (
-    Request $request,
-    PinatJwtService $jwt
-) {
-    $token = $jwt->getBearerToken($request);
-
-    return [
-        'kid' => $jwt->getKid($token),
-        'header' => $jwt->getHeader($token),
-    ];
-});

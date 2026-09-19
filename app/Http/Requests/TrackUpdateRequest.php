@@ -34,6 +34,7 @@ class TrackUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique('tracks', 'slug')->ignore($this->track),
             ],
+            'is_active' => ['sometimes', 'boolean'],
             'description' => ['nullable', 'sometimes', 'string'],
             'order' => ['sometimes', 'nullable', 'integer', Rule::unique('tracks', 'order')->ignore($this->track)],
             'image_url' => ['nullable', 'sometimes', 'url', 'max:255'],

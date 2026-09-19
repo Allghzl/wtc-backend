@@ -29,6 +29,8 @@ class StudyClassIndexRequest extends FormRequest
             'pagination' => ['nullable', 'in:true,false,1,0'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'active_only' => ['nullable', 'in:true,false,1,0'],
+            'with_tracks' => ['nullable', 'in:true,false,1,0'],
         ];
     }
 }

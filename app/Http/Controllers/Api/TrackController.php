@@ -21,6 +21,11 @@ class TrackController extends Controller
     {
         $query = Track::with(['creator.roles', 'creator.user'])->withCount(['modules']);
 
+        // Student-facing: only active tracks
+        if ($request->boolean('active_only')) {
+            $query->where('is_active', true);
+        }
+
         // Apply search filter
         $query->when($request->input('search'), function ($q, $search) {
             $q->where(function ($subQuery) use ($search) {
@@ -48,7 +53,6 @@ class TrackController extends Controller
             );
         }
 
-        // Paginated response
         $perPage = $request->input('per_page', 15);
         $tracks = $query->paginate($perPage);
 

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -15,11 +16,19 @@ class Track extends Model implements Auditable
     protected $fillable = [
         'title',
         'slug',
+        'is_active',
         'description',
         'order',
         'image_url',
         'created_by'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     protected static function boot()
     {
@@ -83,5 +92,11 @@ class Track extends Model implements Auditable
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Profile::class, 'created_by');
+    }
+
+    public function studyClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(StudyClass::class, 'study_class_tracks')
+            ->withTimestamps();
     }
 }

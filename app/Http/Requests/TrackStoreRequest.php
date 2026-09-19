@@ -28,6 +28,7 @@ class TrackStoreRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'unique:tracks,slug'],
+            'is_active' => ['sometimes', 'boolean'],
             'description' => ['nullable', 'string'],
             'order' => ['nullable', 'integer'],
             'image_url' => ['nullable', 'url', 'max:255'],
