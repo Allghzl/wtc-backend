@@ -112,9 +112,10 @@ class StudyClassController extends Controller
     /**
      * Assign a track to a study class.
      */
-    public function assignTrack(string $id, Track $track)
+    public function assignTrack(string $id, string $trackId)
     {
         $studyClass = StudyClass::findOrFail($id);
+        $track = Track::findOrFail($trackId);
 
         if ($studyClass->tracks()->where('track_id', $track->id)->exists()) {
             return $this->error('Track is already assigned to this study class.', 409);
@@ -130,9 +131,11 @@ class StudyClassController extends Controller
     /**
      * Remove a track from a study class.
      */
-    public function removeTrack(string $id, Track $track)
+    public function removeTrack(string $id, string $trackId)
     {
         $studyClass = StudyClass::findOrFail($id);
+        $track = Track::findOrFail($trackId);
+
         $studyClass->tracks()->detach($track->id);
 
         $studyClass->load(['tracks' => fn ($q) => $q->orderBy('order')]);
