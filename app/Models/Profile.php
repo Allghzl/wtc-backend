@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Certificate;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Profile extends Model
@@ -140,5 +141,10 @@ class Profile extends Model
         )
             ->withPivot('completed_at')
             ->withTimestamps();
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
     }
 }
