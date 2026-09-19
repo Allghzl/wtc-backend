@@ -37,14 +37,17 @@ class User extends Authenticatable
         'avatar',
         'last_login_at',
         'email_verified_at',
+        'email_verification_token',
+        'email_verification_expires_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'last_login_at'      => 'datetime',
-            'password'           => 'hashed',
+            'email_verified_at'             => 'datetime',
+            'email_verification_expires_at' => 'datetime',
+            'last_login_at'                 => 'datetime',
+            'password'                      => 'hashed',
         ];
     }
 
@@ -82,8 +85,6 @@ class User extends Authenticatable
 
     public function hasRole(string $roleName): bool
     {
-        return $this->profile()
-            ->whereHas('roles', fn($query) => $query->where('name', $roleName))
-            ->exists();
+        return $this->profile?->roles->contains('name', $roleName) ?? false;
     }
 }

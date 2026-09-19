@@ -105,13 +105,7 @@ class AuthController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'exception' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ], 401);
+            return $this->error('Authentication failed.', 401);
         }
     }
 

@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Events\ScorePublished;
 use App\Events\SubmissionCreated;
+use App\Events\UserRegistered;
 use App\Listeners\CalculateScore;
+use App\Listeners\SendEmailVerification;
 use App\Listeners\SendNotification;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Event::listen(SubmissionCreated::class, CalculateScore::class);
         Event::listen(ScorePublished::class, SendNotification::class);
+        Event::listen(UserRegistered::class, SendEmailVerification::class);
 
         Scramble::configure()->routes(function (Route $route) {
             return Str::startsWith($route->uri, 'api/');

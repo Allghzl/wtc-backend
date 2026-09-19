@@ -19,9 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->alias([
-            'pinat.auth' => \App\Http\Middleware\AuthenticatePinatUser::class,
-            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'pinat.auth'       => \App\Http\Middleware\AuthenticatePinatUser::class,
+            'admin'            => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'teacher_or_admin' => \App\Http\Middleware\EnsureUserIsTeacherOrAdmin::class,
+            'verified.email'   => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
