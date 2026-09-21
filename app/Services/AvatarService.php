@@ -116,7 +116,7 @@ class AvatarService
                 }
             }
 
-            // Save ke S3 (graceful fallback if S3 not configured)
+            // Save ke S3 — do NOT update the database if the upload fails
             try {
                 $saved = Storage::disk('s3')->put($path, $webpContent);
 
@@ -124,9 +124,10 @@ class AvatarService
                     throw new \Exception('Failed to save avatar to storage.');
                 }
             } catch (\Exception $e) {
-                // S3 not configured - still update database with path
-                // Frontend can handle missing avatar gracefully
                 report($e);
+                throw ValidationException::withMessages([
+                    'avatar' => ['Gagal menyimpan avatar ke storage. Silakan coba lagi.'],
+                ]);
             }
 
             // Update user avatar field dengan storage path

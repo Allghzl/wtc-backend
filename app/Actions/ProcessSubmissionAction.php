@@ -44,9 +44,11 @@ class ProcessSubmissionAction
             |--------------------------------------------------------------------------
             */
 
+            // Lock the rows so concurrent requests cannot both pass the attempt check
             $attemptCount = Submission::query()
                 ->where('profile_id', $profile->id)
                 ->where('challenge_id', $challenge->id)
+                ->lockForUpdate()
                 ->count();
 
             $allowedAttempts = $challenge->allowed_attempts;

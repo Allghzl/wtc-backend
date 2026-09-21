@@ -19,7 +19,9 @@ class AttachmentService
         ?int $challengeId = null
     ): Attachment {
         $timestamp = now()->format('Y/m/d');
-        $fileName = uniqid() . '_' . $file->getClientOriginalName();
+        // Strip path separators from the client filename to prevent path traversal
+        $safeBaseName = preg_replace('/[\/\\\\.]{2,}|[^A-Za-z0-9._\-]/', '_', $file->getClientOriginalName());
+        $fileName = uniqid() . '_' . $safeBaseName;
         $filePath = "attachments/{$timestamp}/{$fileName}";
 
         $disk = Storage::disk('s3');

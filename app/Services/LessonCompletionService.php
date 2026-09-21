@@ -15,21 +15,12 @@ class LessonCompletionService
      */
     public function markAsComplete(Lesson $lesson, Profile $profile): LessonCompletion
     {
-        // Check if already completed
-        $existing = LessonCompletion::where('profile_id', $profile->id)
-            ->where('lesson_id', $lesson->id)
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
-        // Create new completion
-        return LessonCompletion::create([
-            'profile_id' => $profile->id,
-            'lesson_id' => $lesson->id,
-            'completed_at' => now(),
-        ]);
+        // firstOrCreate is atomic — safe under concurrent requests as long as
+        // the table has a unique index on (profile_id, lesson_id).
+        return LessonCompletion::firstOrCreate(
+            ['profile_id' => $profile->id, 'lesson_id' => $lesson->id],
+            ['completed_at' => now()]
+        );
     }
 
     /**
@@ -95,9 +86,12 @@ class LessonCompletionService
         // Get challenge-based completions for lessons with challenges
         $lessonsWithChallenges = $lessons->filter(fn($l) => $l->challenges_count > 0);
 
+        // Eager-load challenges for all lessons that have them — avoids N+1 queries
+        $lessonsWithChallenges->load('challenges');
+
         $challengeCompletions = [];
         foreach ($lessonsWithChallenges as $lesson) {
-            $challengeIds = $lesson->challenges()->pluck('id');
+            $challengeIds = $lesson->challenges->pluck('id');
 
             $completedCount = DB::table('submissions')
                 ->where('profile_id', $profile->id)

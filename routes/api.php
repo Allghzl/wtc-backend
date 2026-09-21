@@ -92,15 +92,28 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/my/tracks/{track}/overview',           [EnrollmentController::class, 'trackOverview']);
     Route::get('/my/dashboard',                         [EnrollmentController::class, 'dashboard']);
 
-    Route::apiResource('tracks', TrackController::class)->except('destroy');
-    Route::apiResource('modules', ModuleController::class)->except('destroy');
-    Route::apiResource('lessons', LessonController::class)->except('destroy');
-    Route::apiResource('challenges', ChallengeController::class)->except('destroy');
-    Route::delete('/tracks/{track}', [TrackController::class, 'destroy'])->middleware('teacher_or_admin');
-    Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->middleware('teacher_or_admin');
-    Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy'])->middleware('teacher_or_admin');
-    Route::delete('/challenges/{challenge}', [ChallengeController::class, 'destroy'])->middleware('teacher_or_admin');
-    Route::apiResource('study-classes', StudyClassController::class);
+    // Curriculum read — any authenticated user
+    Route::apiResource('tracks', TrackController::class)->only(['index', 'show']);
+    Route::apiResource('modules', ModuleController::class)->only(['index', 'show']);
+    Route::apiResource('lessons', LessonController::class)->only(['index', 'show']);
+    Route::apiResource('challenges', ChallengeController::class)->only(['index', 'show']);
+
+    // Curriculum write + study-class write — teacher or admin only
+    Route::middleware('teacher_or_admin')->group(function () {
+        Route::apiResource('tracks', TrackController::class)->only(['store', 'update']);
+        Route::apiResource('modules', ModuleController::class)->only(['store', 'update']);
+        Route::apiResource('lessons', LessonController::class)->only(['store', 'update']);
+        Route::apiResource('challenges', ChallengeController::class)->only(['store', 'update']);
+        Route::delete('/tracks/{track}',     [TrackController::class,     'destroy']);
+        Route::delete('/modules/{module}',   [ModuleController::class,    'destroy']);
+        Route::delete('/lessons/{lesson}',   [LessonController::class,    'destroy']);
+        Route::delete('/challenges/{challenge}', [ChallengeController::class, 'destroy']);
+
+        Route::apiResource('study-classes', StudyClassController::class)->only(['store', 'update', 'destroy']);
+    });
+
+    // Study-class read — any authenticated user
+    Route::apiResource('study-classes', StudyClassController::class)->only(['index', 'show']);
 
     // Study class — additional endpoints
     Route::get('/my/study-class', [StudyClassController::class, 'myClass']);

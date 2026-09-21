@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Profile;
 use App\Models\Track;
 use App\Models\TrackEnrollment;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class EnrollmentService
@@ -14,9 +15,17 @@ class EnrollmentService
      */
     public function enroll(Profile $profile, Track $track): TrackEnrollment
     {
-        // Check if already enrolled
+        return DB::transaction(function () use ($profile, $track) {
+            return $this->doEnroll($profile, $track);
+        });
+    }
+
+    private function doEnroll(Profile $profile, Track $track): TrackEnrollment
+    {
+        // Lock the row to prevent duplicate enrollments under concurrent requests
         $existing = TrackEnrollment::where('profile_id', $profile->id)
             ->where('track_id', $track->id)
+            ->lockForUpdate()
             ->first();
 
         if ($existing && $existing->isActive()) {
@@ -50,7 +59,7 @@ class EnrollmentService
             'status' => 'active',
             'enrolled_at' => now(),
         ]);
-    }
+    } // end doEnroll
 
     /**
      * Unenroll (drop) a profile from a track

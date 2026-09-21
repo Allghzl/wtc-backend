@@ -130,6 +130,12 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request, Profile $profile)
     {
+        // Only the profile owner or an admin may update a profile
+        $authUser = $request->user()->load('profile.roles');
+        if ($authUser->profile?->id !== $profile->id && !$authUser->hasRole('admin')) {
+            return $this->error('Unauthorized.', 403);
+        }
+
         $profile->update($request->validated());
 
         // Reload profile with relationships
@@ -156,6 +162,12 @@ class ProfileController extends Controller
      */
     public function uploadAvatar(AvatarUploadRequest $request, Profile $profile)
     {
+        // Only the profile owner or an admin may upload an avatar
+        $authUser = $request->user()->load('profile.roles');
+        if ($authUser->profile?->id !== $profile->id && !$authUser->hasRole('admin')) {
+            return $this->error('Unauthorized.', 403);
+        }
+
         try {
             $user = $profile->user;
 
@@ -194,6 +206,12 @@ class ProfileController extends Controller
      */
     public function deleteAvatar(Profile $profile)
     {
+        // Only the profile owner or an admin may delete an avatar
+        $authUser = auth()->user()->load('profile.roles');
+        if ($authUser->profile?->id !== $profile->id && !$authUser->hasRole('admin')) {
+            return $this->error('Unauthorized.', 403);
+        }
+
         $user = $profile->user;
 
         if (!$user) {

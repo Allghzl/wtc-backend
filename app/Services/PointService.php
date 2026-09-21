@@ -103,27 +103,28 @@ class PointService
      */
     public function awardLessonCompletionPoints(Profile $profile, string $lessonId, string $lessonTitle): ?PointLog
     {
-        // Check if points were already awarded for this lesson
-        $existingLog = PointLog::where('profile_id', $profile->id)
-            ->where('reason', 'lesson_completion')
-            ->whereJsonContains('metadata->lesson_id', $lessonId)
-            ->first();
+        return DB::transaction(function () use ($profile, $lessonId, $lessonTitle) {
+            // Lock to prevent duplicate awards under concurrent requests
+            $existingLog = PointLog::where('profile_id', $profile->id)
+                ->where('reason', 'lesson_completion')
+                ->whereJsonContains('metadata->lesson_id', $lessonId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($existingLog) {
-            // Points already awarded, don't award again
-            return null;
-        }
+            if ($existingLog) {
+                return null;
+            }
 
-        // Award points
-        return $this->addPoints(
-            $profile,
-            10, // 10 points per lesson
-            'lesson_completion',
-            [
-                'lesson_id' => $lessonId,
-                'lesson_title' => $lessonTitle,
-            ]
-        );
+            return $this->addPoints(
+                $profile,
+                10,
+                'lesson_completion',
+                [
+                    'lesson_id'    => $lessonId,
+                    'lesson_title' => $lessonTitle,
+                ]
+            );
+        });
     }
 
     /**
@@ -143,34 +144,33 @@ class PointService
         int $maxScore,
         string $challengeTitle
     ): ?PointLog {
-        // Check if points were already awarded for this submission
-        $existingLog = PointLog::where('profile_id', $profile->id)
-            ->where('reason', 'submission_graded')
-            ->whereJsonContains('metadata->submission_id', $submissionId)
-            ->first();
+        return DB::transaction(function () use ($profile, $submissionId, $score, $maxScore, $challengeTitle) {
+            // Lock to prevent duplicate awards under concurrent requests
+            $existingLog = PointLog::where('profile_id', $profile->id)
+                ->where('reason', 'submission_graded')
+                ->whereJsonContains('metadata->submission_id', $submissionId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($existingLog) {
-            // Points already awarded, don't award again
-            return null;
-        }
+            if ($existingLog) {
+                return null;
+            }
 
-        // Calculate points based on score percentage
-        // Award between 5-20 points based on performance
-        $percentage = $maxScore > 0 ? ($score / $maxScore) : 0;
-        $points = max(5, min(20, (int) round($percentage * 20)));
+            $percentage = $maxScore > 0 ? ($score / $maxScore) : 0;
+            $points     = max(5, min(20, (int) round($percentage * 20)));
 
-        // Award points
-        return $this->addPoints(
-            $profile,
-            $points,
-            'submission_graded',
-            [
-                'submission_id' => $submissionId,
-                'challenge_title' => $challengeTitle,
-                'score' => $score,
-                'max_score' => $maxScore,
-                'percentage' => round($percentage * 100, 2),
-            ]
-        );
+            return $this->addPoints(
+                $profile,
+                $points,
+                'submission_graded',
+                [
+                    'submission_id'   => $submissionId,
+                    'challenge_title' => $challengeTitle,
+                    'score'           => $score,
+                    'max_score'       => $maxScore,
+                    'percentage'      => round($percentage * 100, 2),
+                ]
+            );
+        });
     }
 }

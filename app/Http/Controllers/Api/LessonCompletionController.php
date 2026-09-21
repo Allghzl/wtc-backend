@@ -12,6 +12,7 @@ use App\Services\LessonCompletionService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -40,17 +41,21 @@ class LessonCompletionController extends Controller
             ]);
         }
 
-        // Mark lesson as complete (idempotent)
-        $completion = $this->lessonCompletionService->markAsComplete($lesson, $profile);
+        // Wrap completion + point award in a transaction so they're atomic
+        $completion = DB::transaction(function () use ($lesson, $profile) {
+            $completion = $this->lessonCompletionService->markAsComplete($lesson, $profile);
 
-        // Award points for lesson completion (if not already awarded)
-        $pointLog = $this->pointService->awardLessonCompletionPoints(
-            $profile,
-            $lesson->id,
-            $lesson->title
-        );
+            // Award points for lesson completion (idempotent — skips if already awarded)
+            $this->pointService->awardLessonCompletionPoints(
+                $profile,
+                $lesson->id,
+                $lesson->title
+            );
 
-        // Certificate + achievement hooks
+            return $completion;
+        });
+
+        // Certificate + achievement hooks (outside transaction — non-critical side effects)
         $this->handleTrackCompletion($profile, $lesson);
 
         return $this->success(

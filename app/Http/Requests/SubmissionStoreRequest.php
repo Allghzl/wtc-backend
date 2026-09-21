@@ -24,6 +24,11 @@ class SubmissionStoreRequest extends FormRequest
             'submitted_content' => [
                 'nullable',
                 'array',
+                'max:200', // cap at 200 top-level items
+            ],
+            'submitted_content.*' => [
+                'nullable',
+                'max:50000', // cap each value at 50 KB
             ],
             'file' => [
                 'nullable',

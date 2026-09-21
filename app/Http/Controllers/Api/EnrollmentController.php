@@ -102,7 +102,10 @@ class EnrollmentController extends Controller
             ->get();
 
         if ($tracks->isEmpty()) {
-            return $this->error('Anda belum mendaftar ke track manapun.', 404);
+            return $this->success(
+                [],
+                'Anda belum mendaftar ke track manapun.'
+            );
         }
 
         return $this->success(

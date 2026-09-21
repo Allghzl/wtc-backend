@@ -33,6 +33,7 @@ class SubmissionUpdateRequest extends FormRequest
             'feedback' => [
                 'nullable',
                 'string',
+                'max:5000',
             ],
 
             'status' => [
