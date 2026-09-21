@@ -119,7 +119,11 @@ class AuthController extends Controller
                 $request->validated()
             );
 
-            UserRegistered::dispatch($result['user']);
+            try {
+                UserRegistered::dispatch($result['user']);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('UserRegistered event dispatch failed', ['error' => $e->getMessage()]);
+            }
 
             try {
                 if ($result['profile']) {
