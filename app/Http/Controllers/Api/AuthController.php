@@ -200,7 +200,7 @@ class AuthController extends Controller
     {
         $user = $request
             ->user()
-            ->load('profile.roles');
+            ->load('profile.roles', 'profile.studyClass');
 
         return $this->success([
             'user' => new UserResource($user),
