@@ -30,6 +30,7 @@ class UpdateStudyClassRequest extends FormRequest
             'academic_year' => ['nullable', 'string', 'max:20'],
             'semester' => ['nullable', 'string', 'max:20'],
             'is_active' => ['sometimes', 'boolean'],
+            'image_url' => ['nullable', 'url', 'max:255'],
         ];
     }
 

@@ -18,6 +18,7 @@ class StudyClass extends Model
         'academic_year',
         'semester',
         'is_active',
+        'image_url',
     ];
 
     protected function casts(): array
