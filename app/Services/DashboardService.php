@@ -25,19 +25,17 @@ class DashboardService
             ->orderBy('enrolled_at', 'desc')
             ->get();
 
-        // Get completed enrollments count
-        $completedEnrollmentsCount = $profile->trackEnrollments()
-            ->where('status', 'completed')
-            ->count();
+        // Pre-compute progress once — shared by getStats() and getTracksWithProgress()
+        // to avoid calling getTrackProgress() 2× per enrollment (was N*2 queries).
+        $progressByTrackId = [];
+        foreach ($activeEnrollments as $enrollment) {
+            $track = $enrollment->track;
+            $progressByTrackId[$track->id] = $this->progressService->getTrackProgress($track, $profile);
+        }
 
-        // Calculate stats
-        $stats = $this->getStats($profile, $activeEnrollments);
-
-        // Get continue learning information
+        $stats            = $this->getStats($profile, $activeEnrollments, $progressByTrackId);
         $continueLearning = $this->learningStateService->getContinueLearning($profile);
-
-        // Get tracks with progress
-        $tracks = $this->getTracksWithProgress($activeEnrollments, $profile);
+        $tracks           = $this->getTracksWithProgress($activeEnrollments, $progressByTrackId);
 
         return [
             'profile' => [
@@ -75,21 +73,20 @@ class DashboardService
     /**
      * Calculate summary statistics for the student.
      */
-    protected function getStats(Profile $profile, Collection $activeEnrollments): array
+    protected function getStats(Profile $profile, Collection $activeEnrollments, array $progressByTrackId): array
     {
         $totalCompletedChallenges = 0;
-        $totalChallenges = 0;
-        $totalCompletedLessons = 0;
-        $totalLessons = 0;
+        $totalChallenges          = 0;
+        $totalCompletedLessons    = 0;
+        $totalLessons             = 0;
 
         foreach ($activeEnrollments as $enrollment) {
-            $track = $enrollment->track;
-            $progress = $this->progressService->getTrackProgress($track, $profile);
+            $progress = $progressByTrackId[$enrollment->track->id] ?? [];
 
-            $totalCompletedChallenges += $progress['completed_challenges'];
-            $totalChallenges += $progress['total_challenges'];
-            $totalCompletedLessons += $progress['completed_lessons'];
-            $totalLessons += $progress['total_lessons'];
+            $totalCompletedChallenges += $progress['completed_challenges'] ?? 0;
+            $totalChallenges          += $progress['total_challenges']     ?? 0;
+            $totalCompletedLessons    += $progress['completed_lessons']    ?? 0;
+            $totalLessons             += $progress['total_lessons']        ?? 0;
         }
 
         $completedTracksCount = $profile->trackEnrollments()
@@ -117,13 +114,13 @@ class DashboardService
     /**
      * Get tracks with their progress information.
      */
-    protected function getTracksWithProgress(Collection $enrollments, Profile $profile): array
+    protected function getTracksWithProgress(Collection $enrollments, array $progressByTrackId): array
     {
         $tracks = [];
 
         foreach ($enrollments as $enrollment) {
-            $track = $enrollment->track;
-            $progress = $this->progressService->getTrackProgress($track, $profile);
+            $track    = $enrollment->track;
+            $progress = $progressByTrackId[$track->id] ?? [];
 
             $tracks[] = [
                 'id' => $track->id,

@@ -22,10 +22,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
-                'email_verification_token',
-                'email_verification_expires_at',
-            ]);
+            if (Schema::hasColumn('users', 'email_verification_token')) {
+                $table->dropColumn('email_verification_token');
+            }
+            if (Schema::hasColumn('users', 'email_verification_expires_at')) {
+                $table->dropColumn('email_verification_expires_at');
+            }
         });
     }
 };

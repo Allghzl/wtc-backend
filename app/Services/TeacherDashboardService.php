@@ -16,13 +16,24 @@ class TeacherDashboardService
      */
     public function dashboard(): array
     {
-        $totalSubmissions = Submission::count();
-        $pendingCount     = Submission::where('status', 'submitted')->count();
-        $gradedCount      = Submission::where('status', 'graded')->count();
-        $totalStudents    = Profile::whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))->count();
-        $totalChallenges  = Challenge::count();
-        $totalTracks      = Track::count();
-        $totalLessons     = Lesson::count();
+        // Combine three submission COUNTs into one query
+        $submissionStats = \Illuminate\Support\Facades\DB::selectOne('
+            SELECT
+                COUNT(*) AS total,
+                SUM(status = ?) AS pending,
+                SUM(status = ?) AS graded
+            FROM submissions
+        ', ['submitted', 'graded']);
+
+        // Cache the four entity counts — they change infrequently
+        $entityStats = \Illuminate\Support\Facades\Cache::remember('teacher_dashboard_entity_stats', 60, function () {
+            return [
+                'total_students'   => Profile::whereDoesntHave('roles', fn ($q) => $q->whereIn('name', ['admin', 'teacher']))->count(),
+                'total_challenges' => Challenge::count(),
+                'total_tracks'     => Track::count(),
+                'total_lessons'    => Lesson::count(),
+            ];
+        });
 
         // Latest pending submissions (oldest first — most urgent for grading)
         $pendingQueue = Submission::with([
@@ -43,13 +54,13 @@ class TeacherDashboardService
 
         return [
             'stats' => [
-                'total_submissions'   => $totalSubmissions,
-                'pending_submissions' => $pendingCount,
-                'graded_submissions'  => $gradedCount,
-                'total_students'      => $totalStudents,
-                'total_challenges'    => $totalChallenges,
-                'total_tracks'        => $totalTracks,
-                'total_lessons'       => $totalLessons,
+                'total_submissions'   => (int) $submissionStats->total,
+                'pending_submissions' => (int) $submissionStats->pending,
+                'graded_submissions'  => (int) $submissionStats->graded,
+                'total_students'      => $entityStats['total_students'],
+                'total_challenges'    => $entityStats['total_challenges'],
+                'total_tracks'        => $entityStats['total_tracks'],
+                'total_lessons'       => $entityStats['total_lessons'],
             ],
             'pending_submissions' => $pendingQueue,
             'leaderboard'         => $leaderboard,

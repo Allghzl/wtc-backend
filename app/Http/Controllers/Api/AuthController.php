@@ -119,9 +119,11 @@ class AuthController extends Controller
                 $request->validated()
             );
 
+            $emailSent = true;
             try {
                 UserRegistered::dispatch($result['user']);
             } catch (\Throwable $e) {
+                $emailSent = false;
                 \Illuminate\Support\Facades\Log::error('UserRegistered event dispatch failed', ['error' => $e->getMessage()]);
             }
 
@@ -134,10 +136,13 @@ class AuthController extends Controller
             }
 
             return $this->success([
-                'user' => new UserResource($result['user']),
-                'profile' => new ProfileResource($result['profile']),
-                'token' => $result['token'],
+                'user'       => new UserResource($result['user']),
+                'profile'    => new ProfileResource($result['profile']),
+                'token'      => $result['token'],
+                'email_sent' => $emailSent,
             ], 'User registered successfully.', 201);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            return $this->error('The name has already been taken.', 422);
         } catch (ValidationException $e) {
             return $this->error(
                 $e->getMessage(),

@@ -26,7 +26,7 @@ class EmailVerificationService
      */
     public function verify(string $token): User
     {
-        $user = User::where('email_verification_token', $token)->first();
+        $user = User::where('email_verification_token', hash('sha256', $token))->first();
 
         if (! $user) {
             throw ValidationException::withMessages([
@@ -95,16 +95,17 @@ class EmailVerificationService
 
     private function generateToken(User $user): string
     {
-        $token = Str::random(64);
+        $plainToken = Str::random(64);
 
+        // Store the hash — if the DB leaks, raw tokens cannot be used directly
         $user->update([
-            'email_verification_token'      => $token,
+            'email_verification_token'      => hash('sha256', $plainToken),
             'email_verification_expires_at' => now()->addMinutes(
                 config('auth.verification.expire', 60)
             ),
         ]);
 
-        return $token;
+        return $plainToken;
     }
 
     private function buildVerificationUrl(string $token): string

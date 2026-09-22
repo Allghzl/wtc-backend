@@ -21,18 +21,25 @@ class LearningStateService
     {
         $modules = $track->modules()
             ->with(['lessons' => function ($query) {
-                $query->orderBy('order');
+                $query->orderBy('order')->with('challenges');
             }])
             ->orderBy('order')
             ->get();
 
-        foreach ($modules as $module) {
-            $lessons = $module->lessons; // Use eager-loaded collection
+        // Collect all lesson IDs in order so we can batch the completion check
+        $allLessons   = $modules->flatMap(fn ($m) => $m->lessons);
+        $allLessonIds = $allLessons->pluck('id')->all();
 
-            foreach ($lessons as $lesson) {
-                if (!$this->lessonCompletionService->isLessonCompleted($lesson, $profile)) {
-                    return $lesson;
-                }
+        if (empty($allLessonIds)) {
+            return null;
+        }
+
+        // One batch call instead of 2-3 queries per lesson
+        $completions = $this->lessonCompletionService->areLessonsCompleted($allLessonIds, $profile);
+
+        foreach ($allLessons as $lesson) {
+            if (! ($completions[$lesson->id] ?? false)) {
+                return $lesson;
             }
         }
 
