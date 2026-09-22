@@ -2,12 +2,8 @@
 
 namespace App\Providers;
 
-use App\Events\ScorePublished;
-use App\Events\SubmissionCreated;
 use App\Events\UserRegistered;
-use App\Listeners\CalculateScore;
 use App\Listeners\SendEmailVerification;
-use App\Listeners\SendNotification;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Event;
@@ -23,8 +19,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Event::listen(SubmissionCreated::class, CalculateScore::class);
-        Event::listen(ScorePublished::class, SendNotification::class);
+        /*
+         * SendEmailVerification is registered manually because Laravel's
+         * event auto-discovery does not pick it up (likely due to its
+         * constructor injection). All other listeners (e.g. SendNotification)
+         * are handled by auto-discovery and must NOT be registered here to
+         * avoid double-firing.
+         */
         Event::listen(UserRegistered::class, SendEmailVerification::class);
 
         Scramble::configure()->routes(function (Route $route) {
