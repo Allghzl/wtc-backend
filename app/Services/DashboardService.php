@@ -30,6 +30,9 @@ class DashboardService
         $progressByTrackId = [];
         foreach ($activeEnrollments as $enrollment) {
             $track = $enrollment->track;
+            if ($track === null) {
+                continue;
+            }
             $progressByTrackId[$track->id] = $this->progressService->getTrackProgress($track, $profile);
         }
 

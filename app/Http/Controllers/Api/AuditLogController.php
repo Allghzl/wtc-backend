@@ -13,6 +13,7 @@ use App\Models\Module;
 use App\Models\Lesson;
 use App\Models\Challenge;
 use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OwenIt\Auditing\Models\Audit;
 

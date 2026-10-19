@@ -25,7 +25,7 @@ class UpdateStudyClassRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:study_classes,name,' . $this->route('id')],
+            'name' => ['required', 'string', 'max:255', 'unique:study_classes,name,' . $this->route('study_class')],
             'description' => ['nullable', 'string'],
             'academic_year' => ['nullable', 'string', 'max:20'],
             'semester' => ['nullable', 'string', 'max:20'],
