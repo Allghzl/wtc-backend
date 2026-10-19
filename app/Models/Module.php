@@ -38,7 +38,7 @@ class Module extends Model implements Auditable
 
         static::creating(function ($module) {
             if (is_null($module->order)) {
-                $maxOrder = static::where('track_id', $module->track_id)
+                $maxOrder = static::withTrashed()->where('track_id', $module->track_id)
                     ->max('order') ?? 0;
                 $module->order = $maxOrder + 1;
             }
