@@ -32,7 +32,10 @@ class ChallengeResource extends JsonResource
             'allowed_attempts' => $this->allowed_attempts,
             'created_by' => $this->created_by,
             'creator' => new CreatorResource($this->whenLoaded('creator')),
+            'module' => $this->whenLoaded('module', fn () => $this->module ? ['id' => $this->module->id, 'title' => $this->module->title] : null),
+            'lesson' => $this->whenLoaded('lesson', fn () => $this->lesson ? ['id' => $this->lesson->id, 'title' => $this->lesson->title] : null),
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];

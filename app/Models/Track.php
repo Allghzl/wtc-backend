@@ -39,6 +39,20 @@ class Track extends Model implements Auditable
                 $track->order = static::max('order') + 1;
             }
         });
+
+        // Curriculum cascade: a deleted track takes its whole curriculum with it.
+        // Study classes are categorization only and are deliberately NOT touched.
+        static::deleting(function (Track $track) {
+            if ($track->isForceDeleting()) {
+                return; // DB-level cascade handles the hard delete
+            }
+
+            $track->modules()->get()->each->delete();
+        });
+
+        static::restoring(function (Track $track) {
+            Module::onlyTrashed()->where('track_id', $track->id)->get()->each->restore();
+        });
     }
 
     public function getRouteKeyName()

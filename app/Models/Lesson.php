@@ -30,10 +30,22 @@ class Lesson extends Model implements Auditable
 
         static::creating(function ($lesson) {
             if (is_null($lesson->order)) {
-                $maxOrder = static::where('module_id', $lesson->module_id)
+                $maxOrder = static::withTrashed()->where('module_id', $lesson->module_id)
                     ->max('order') ?? 0;
                 $lesson->order = $maxOrder + 1;
             }
+        });
+
+        static::deleting(function (Lesson $lesson) {
+            if ($lesson->isForceDeleting()) {
+                return;
+            }
+
+            $lesson->challenges()->get()->each->delete();
+        });
+
+        static::restoring(function (Lesson $lesson) {
+            Challenge::onlyTrashed()->where('lesson_id', $lesson->id)->get()->each->restore();
         });
     }
 

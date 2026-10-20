@@ -201,4 +201,199 @@ class RestoreContentTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    public function test_deleting_track_cascades_to_modules_lessons_and_challenges(): void
+    {
+        $track = Track::factory()->create();
+        $module = Module::factory()->create(['track_id' => $track->id]);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $lessonChallenge = Challenge::factory()->create([
+            'module_id' => null,
+            'lesson_id' => $lesson->id,
+        ]);
+        $moduleChallenge = Challenge::factory()->create([
+            'module_id' => $module->id,
+            'lesson_id' => null,
+        ]);
+
+        $track->delete();
+
+        $this->assertSoftDeleted('tracks', ['id' => $track->id]);
+        $this->assertSoftDeleted('modules', ['id' => $module->id]);
+        $this->assertSoftDeleted('lessons', ['id' => $lesson->id]);
+        $this->assertSoftDeleted('challenges', ['id' => $lessonChallenge->id]);
+        $this->assertSoftDeleted('challenges', ['id' => $moduleChallenge->id]);
+    }
+
+    public function test_deleting_track_does_not_affect_study_classes(): void
+    {
+        $studyClass = \App\Models\StudyClass::factory()->create();
+        $track = Track::factory()->create();
+        $studyClass->tracks()->attach($track->id);
+
+        $track->delete();
+
+        $this->assertNotSoftDeleted('study_classes', ['id' => $studyClass->id]);
+        $this->assertDatabaseHas('study_class_tracks', [
+            'study_class_id' => $studyClass->id,
+            'track_id' => $track->id,
+        ]);
+    }
+
+    public function test_deleting_module_cascades_to_lessons_and_challenges(): void
+    {
+        $track = Track::factory()->create();
+        $module = Module::factory()->create(['track_id' => $track->id]);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $challenge = Challenge::factory()->create([
+            'module_id' => null,
+            'lesson_id' => $lesson->id,
+        ]);
+
+        $module->delete();
+
+        $this->assertSoftDeleted('lessons', ['id' => $lesson->id]);
+        $this->assertSoftDeleted('challenges', ['id' => $challenge->id]);
+        $this->assertNotSoftDeleted('tracks', ['id' => $track->id]);
+    }
+
+    public function test_restoring_track_restores_its_whole_curriculum(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $track = Track::factory()->create();
+        $module = Module::factory()->create(['track_id' => $track->id]);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $challenge = Challenge::factory()->create([
+            'module_id' => $module->id,
+            'lesson_id' => null,
+        ]);
+
+        $track->delete();
+
+        $response = $this->postJson("/api/admin/tracks/{$track->id}/restore");
+        $response->assertStatus(200);
+
+        $this->assertNotSoftDeleted('tracks', ['id' => $track->id]);
+        $this->assertNotSoftDeleted('modules', ['id' => $module->id]);
+        $this->assertNotSoftDeleted('lessons', ['id' => $lesson->id]);
+        $this->assertNotSoftDeleted('challenges', ['id' => $challenge->id]);
+    }
+
+    public function test_restoring_module_restores_its_lessons_and_challenges(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $module = Module::factory()->create();
+        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $lessonChallenge = Challenge::factory()->create(['module_id' => null, 'lesson_id' => $lesson->id]);
+        $moduleChallenge = Challenge::factory()->create(['module_id' => $module->id, 'lesson_id' => null]);
+
+        $module->delete();
+
+        $this->postJson("/api/admin/modules/{$module->id}/restore")->assertStatus(200);
+
+        $this->assertNotSoftDeleted('lessons', ['id' => $lesson->id]);
+        $this->assertNotSoftDeleted('challenges', ['id' => $lessonChallenge->id]);
+        $this->assertNotSoftDeleted('challenges', ['id' => $moduleChallenge->id]);
+    }
+
+    public function test_restoring_a_lesson_also_restores_its_trashed_ancestors(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $track = Track::factory()->create();
+        $module = Module::factory()->create(['track_id' => $track->id]);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+
+        $track->delete();
+
+        $this->postJson("/api/admin/lessons/{$lesson->id}/restore")->assertStatus(200);
+
+        $this->assertNotSoftDeleted('lessons', ['id' => $lesson->id]);
+        $this->assertNotSoftDeleted('modules', ['id' => $module->id]);
+        $this->assertNotSoftDeleted('tracks', ['id' => $track->id]);
+    }
+
+    public function test_admin_can_permanently_delete_a_trashed_track(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $track = Track::factory()->create();
+        $module = Module::factory()->create(['track_id' => $track->id]);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
+        $challenge = Challenge::factory()->create([
+            'module_id' => $module->id,
+            'lesson_id' => null,
+        ]);
+        $trackId = $track->id;
+        $moduleId = $module->id;
+        $lessonId = $lesson->id;
+        $challengeId = $challenge->id;
+
+        $track->delete();
+
+        $response = $this->deleteJson("/api/admin/tracks/{$trackId}/force");
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true, 'message' => 'Track permanently deleted.']);
+
+        $this->assertDatabaseMissing('tracks', ['id' => $trackId]);
+        $this->assertDatabaseMissing('modules', ['id' => $moduleId]);
+        $this->assertDatabaseMissing('lessons', ['id' => $lessonId]);
+        $this->assertDatabaseMissing('challenges', ['id' => $challengeId]);
+    }
+
+    public function test_force_delete_requires_the_item_to_be_trashed(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $track = Track::factory()->create();
+
+        $this->deleteJson("/api/admin/tracks/{$track->id}/force")->assertStatus(404);
+        $this->assertDatabaseHas('tracks', ['id' => $track->id, 'deleted_at' => null]);
+    }
+
+    public function test_trashed_track_list_includes_child_counts_and_pagination(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $track = Track::factory()->create();
+        Module::factory()->count(2)->create(['track_id' => $track->id]);
+        $track->delete();
+
+        $response = $this->getJson('/api/admin/tracks/trashed');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.0.modules_count', 2)
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.deleted_at', fn ($v) => $v !== null);
+    }
+
+    public function test_trashed_module_list_exposes_parent_track_name(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        $track = Track::factory()->create(['title' => 'Track Induk']);
+        $module = Module::factory()->create(['track_id' => $track->id]);
+        Lesson::factory()->count(2)->create(['module_id' => $module->id]);
+        $track->delete();
+
+        $response = $this->getJson('/api/admin/modules/trashed');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.0.track.title', 'Track Induk')
+            ->assertJsonPath('data.0.lessons_count', 2);
+    }
+
+    public function test_teacher_cannot_permanently_delete(): void
+    {
+        $this->actingAs($this->teacherUser);
+
+        $track = Track::factory()->create();
+        $track->delete();
+
+        $this->deleteJson("/api/admin/tracks/{$track->id}/force")->assertStatus(403);
+        $this->assertSoftDeleted('tracks', ['id' => $track->id]);
+    }
 }

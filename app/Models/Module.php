@@ -43,6 +43,20 @@ class Module extends Model implements Auditable
                 $module->order = $maxOrder + 1;
             }
         });
+
+        static::deleting(function (Module $module) {
+            if ($module->isForceDeleting()) {
+                return;
+            }
+
+            $module->lessons()->get()->each->delete();
+            $module->challenges()->get()->each->delete();
+        });
+
+        static::restoring(function (Module $module) {
+            Lesson::onlyTrashed()->where('module_id', $module->id)->get()->each->restore();
+            Challenge::onlyTrashed()->where('module_id', $module->id)->get()->each->restore();
+        });
     }
 
     public function getRouteKeyName()

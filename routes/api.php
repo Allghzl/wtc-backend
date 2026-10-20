@@ -223,6 +223,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/admin/modules/{id}/restore', [AuditLogController::class, 'restoreModule']);
         Route::post('/admin/lessons/{id}/restore', [AuditLogController::class, 'restoreLesson']);
         Route::post('/admin/challenges/{id}/restore', [AuditLogController::class, 'restoreChallenge']);
+        Route::delete('/admin/tracks/{id}/force',     [AuditLogController::class, 'forceDeleteTrack']);
+        Route::delete('/admin/modules/{id}/force',    [AuditLogController::class, 'forceDeleteModule']);
+        Route::delete('/admin/lessons/{id}/force',    [AuditLogController::class, 'forceDeleteLesson']);
+        Route::delete('/admin/challenges/{id}/force', [AuditLogController::class, 'forceDeleteChallenge']);
 
         // Achievement management
         Route::get('/admin/achievements',                              [AchievementController::class, 'index']);

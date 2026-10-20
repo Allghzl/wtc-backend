@@ -252,6 +252,8 @@ class AuditLogController extends Controller
             return $this->error('Module not found or not deleted.', 404);
         }
 
+        $this->restoreAncestors($module);
+
         $module->restore();
 
         return $this->success(
@@ -273,6 +275,8 @@ class AuditLogController extends Controller
         if (!$lesson) {
             return $this->error('Lesson not found or not deleted.', 404);
         }
+
+        $this->restoreAncestors($lesson);
 
         $lesson->restore();
 
@@ -296,6 +300,8 @@ class AuditLogController extends Controller
             return $this->error('Challenge not found or not deleted.', 404);
         }
 
+        $this->restoreAncestors($challenge);
+
         $challenge->restore();
 
         return $this->success(
@@ -305,11 +311,55 @@ class AuditLogController extends Controller
     }
 
     /**
+     * Restore every trashed ancestor of a nested item so it becomes reachable
+     * again, without resurrecting unrelated siblings.
+     */
+    private function restoreAncestors(Module|Lesson|Challenge $item): void
+    {
+        // Relations hide soft-deleted parents, so look the ancestors up with withTrashed().
+        if ($item instanceof Challenge && $item->lesson_id) {
+            $lesson = Lesson::withTrashed()->find($item->lesson_id);
+
+            if ($lesson?->trashed()) {
+                $lesson->restoreQuietly();
+            }
+        }
+
+        $moduleId = match (true) {
+            $item instanceof Challenge => $item->lesson_id
+                ? Lesson::withTrashed()->find($item->lesson_id)?->module_id
+                : $item->module_id,
+            $item instanceof Lesson => $item->module_id,
+            default => $item->id,
+        };
+
+        if (!$moduleId) {
+            return;
+        }
+
+        $module = Module::withTrashed()->find($moduleId);
+
+        if ($module?->trashed()) {
+            $module->restoreQuietly();
+        }
+
+        $track = Track::withTrashed()->find($module?->track_id);
+
+        if ($track?->trashed()) {
+            $track->restoreQuietly();
+        }
+    }
+
+    /**
      * List soft-deleted tracks (admin only).
      */
     public function trashedTracks(Request $request): JsonResponse
     {
-        $items = Track::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
+        $items = Track::onlyTrashed()
+            ->with(['creator.roles', 'creator.user'])
+            ->withCount(['modules' => fn ($q) => $q->withTrashed()])
+            ->orderByDesc('deleted_at')
+            ->paginate(20);
         return $this->successWithPagination(
             TrackResource::collection($items),
             'Trashed tracks retrieved successfully.',
@@ -319,7 +369,14 @@ class AuditLogController extends Controller
 
     public function trashedModules(Request $request): JsonResponse
     {
-        $items = Module::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
+        $items = Module::onlyTrashed()
+            ->with(['creator.roles', 'creator.user', 'track' => fn ($q) => $q->withTrashed()])
+            ->withCount([
+                'lessons' => fn ($q) => $q->withTrashed(),
+                'challenges' => fn ($q) => $q->withTrashed(),
+            ])
+            ->orderByDesc('deleted_at')
+            ->paginate(20);
         return $this->successWithPagination(
             ModuleResource::collection($items),
             'Trashed modules retrieved successfully.',
@@ -329,7 +386,11 @@ class AuditLogController extends Controller
 
     public function trashedLessons(Request $request): JsonResponse
     {
-        $items = Lesson::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
+        $items = Lesson::onlyTrashed()
+            ->with(['creator.roles', 'creator.user', 'module' => fn ($q) => $q->withTrashed()])
+            ->withCount(['challenges' => fn ($q) => $q->withTrashed()])
+            ->orderByDesc('deleted_at')
+            ->paginate(20);
         return $this->successWithPagination(
             LessonResource::collection($items),
             'Trashed lessons retrieved successfully.',
@@ -339,11 +400,75 @@ class AuditLogController extends Controller
 
     public function trashedChallenges(Request $request): JsonResponse
     {
-        $items = Challenge::onlyTrashed()->with(['creator.roles', 'creator.user'])->orderByDesc('deleted_at')->paginate(20);
+        $items = Challenge::onlyTrashed()
+            ->with([
+                'creator.roles',
+                'creator.user',
+                'module' => fn ($q) => $q->withTrashed(),
+                'lesson' => fn ($q) => $q->withTrashed(),
+            ])
+            ->orderByDesc('deleted_at')
+            ->paginate(20);
         return $this->successWithPagination(
             ChallengeResource::collection($items),
             'Trashed challenges retrieved successfully.',
             $items
         );
+    }
+
+    /**
+     * Permanently delete a trashed track and its whole curriculum.
+     */
+    public function forceDeleteTrack(int $id): JsonResponse
+    {
+        $track = Track::onlyTrashed()->find($id);
+
+        if (!$track) {
+            return $this->error('Track not found or not deleted.', 404);
+        }
+
+        // Hard delete: the FK cascade removes modules → lessons/challenges → attachments.
+        $track->forceDelete();
+
+        return $this->success(null, 'Track permanently deleted.');
+    }
+
+    public function forceDeleteModule(int $id): JsonResponse
+    {
+        $module = Module::onlyTrashed()->find($id);
+
+        if (!$module) {
+            return $this->error('Module not found or not deleted.', 404);
+        }
+
+        $module->forceDelete();
+
+        return $this->success(null, 'Module permanently deleted.');
+    }
+
+    public function forceDeleteLesson(int $id): JsonResponse
+    {
+        $lesson = Lesson::onlyTrashed()->find($id);
+
+        if (!$lesson) {
+            return $this->error('Lesson not found or not deleted.', 404);
+        }
+
+        $lesson->forceDelete();
+
+        return $this->success(null, 'Lesson permanently deleted.');
+    }
+
+    public function forceDeleteChallenge(int $id): JsonResponse
+    {
+        $challenge = Challenge::onlyTrashed()->find($id);
+
+        if (!$challenge) {
+            return $this->error('Challenge not found or not deleted.', 404);
+        }
+
+        $challenge->forceDelete();
+
+        return $this->success(null, 'Challenge permanently deleted.');
     }
 }

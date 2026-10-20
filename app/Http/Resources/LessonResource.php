@@ -26,7 +26,10 @@ class LessonResource extends JsonResource
             'order' => $this->order,
             'created_by' => $this->created_by,
             'creator' => new CreatorResource($this->whenLoaded('creator')),
+            'module' => $this->whenLoaded('module', fn () => $this->module ? ['id' => $this->module->id, 'title' => $this->module->title] : null),
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
+            'challenges_count' => $this->when($this->challenges_count !== null, fn () => (int) $this->challenges_count),
+            'deleted_at' => $this->deleted_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

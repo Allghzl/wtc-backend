@@ -36,10 +36,10 @@ class Challenge extends Model implements Auditable
         static::creating(function ($challenge) {
             if (is_null($challenge->order)) {
                 if ($challenge->lesson_id) {
-                    $maxOrder = static::where('lesson_id', $challenge->lesson_id)
+                    $maxOrder = static::withTrashed()->where('lesson_id', $challenge->lesson_id)
                         ->max('order') ?? 0;
                 } else {
-                    $maxOrder = static::where('module_id', $challenge->module_id)
+                    $maxOrder = static::withTrashed()->where('module_id', $challenge->module_id)
                         ->whereNull('lesson_id')
                         ->max('order') ?? 0;
                 }
