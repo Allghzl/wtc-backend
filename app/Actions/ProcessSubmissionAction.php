@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Models\Challenge;
+use App\Models\Profile;
 use App\Models\Submission;
 use App\Models\User;
 use App\Services\AutoGradingService;
@@ -44,11 +45,13 @@ class ProcessSubmissionAction
             |--------------------------------------------------------------------------
             */
 
-            // Lock the rows so concurrent requests cannot both pass the attempt check
+            // Postgres rejects FOR UPDATE on aggregate queries, so lock the student's
+            // profile row instead. Concurrent submissions for one student serialize here.
+            Profile::whereKey($profile->id)->lockForUpdate()->first();
+
             $attemptCount = Submission::query()
                 ->where('profile_id', $profile->id)
                 ->where('challenge_id', $challenge->id)
-                ->lockForUpdate()
                 ->count();
 
             $allowedAttempts = $challenge->allowed_attempts;
