@@ -196,6 +196,19 @@ class AutoGradingService
                 ? json_decode($submission->submitted_content, true)
                 : $submission->submitted_content;
 
+            // FillBlankForm sends { blanks: [{blank_number, answer}] }; flatten it
+            // to the answers[] shape the rest of this method expects.
+            if (
+                !isset($submittedContent['answers'])
+                && isset($submittedContent['blanks'])
+                && is_array($submittedContent['blanks'])
+            ) {
+                $submittedContent['answers'] = array_map(
+                    fn ($blank) => $blank['answer'] ?? '',
+                    $submittedContent['blanks']
+                );
+            }
+
             if (!isset($submittedContent['answers']) || !is_array($submittedContent['answers'])) {
                 return [
                     'score' => null,

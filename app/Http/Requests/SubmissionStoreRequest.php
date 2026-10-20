@@ -16,6 +16,23 @@ class SubmissionStoreRequest extends FormRequest
     }
 
     /**
+     * Multipart requests (file uploads) can only carry submitted_content as a
+     * JSON string, so decode it before the array rules run.
+     */
+    protected function prepareForValidation(): void
+    {
+        $content = $this->input('submitted_content');
+
+        if (is_string($content)) {
+            $decoded = json_decode($content, true);
+
+            $this->merge([
+                'submitted_content' => is_array($decoded) ? $decoded : null,
+            ]);
+        }
+    }
+
+    /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array

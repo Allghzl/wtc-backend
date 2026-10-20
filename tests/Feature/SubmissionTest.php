@@ -84,4 +84,69 @@ class SubmissionTest extends TestCase
                 ->count()
         );
     }
+
+    public function test_it_auto_grades_quiz_group_submission(): void
+    {
+        $challenge = Challenge::factory()->create([
+            'type' => 'quiz_group',
+            'allowed_attempts' => null,
+            'metadata' => [
+                'questions' => [
+                    ['question' => 'Q1', 'options' => ['a', 'b'], 'answer' => 'A', 'score' => 50],
+                    ['question' => 'Q2', 'options' => ['a', 'b'], 'answer' => 'B', 'score' => 50],
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/api/challenges/{$challenge->id}/submit", [
+                'submitted_content' => [
+                    'quiz_type' => 'quiz_group',
+                    'answers' => [
+                        ['questionIndex' => 0, 'answer' => 'A'],
+                        ['questionIndex' => 1, 'answer' => 'B'],
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'graded')
+            ->assertJsonPath('data.score', 100);
+
+        $this->assertDatabaseHas('submissions', [
+            'profile_id' => $this->profile->id,
+            'challenge_id' => $challenge->id,
+            'status' => 'graded',
+            'auto_score' => 100,
+        ]);
+    }
+
+    public function test_it_auto_grades_fill_blank_blanks_format(): void
+    {
+        $challenge = Challenge::factory()->create([
+            'type' => 'fill_blank',
+            'allowed_attempts' => null,
+            'metadata' => [
+                'blanks' => [
+                    ['position' => 1, 'expected_answer' => 'Laravel', 'score' => 50],
+                    ['position' => 2, 'expected_answer' => 'Eloquent', 'score' => 50],
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson("/api/challenges/{$challenge->id}/submit", [
+                'submitted_content' => [
+                    'type' => 'fill_blank',
+                    'blanks' => [
+                        ['blank_number' => 1, 'answer' => 'Laravel'],
+                        ['blank_number' => 2, 'answer' => 'Eloquent'],
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.status', 'graded')
+            ->assertJsonPath('data.score', 100);
+    }
 }
