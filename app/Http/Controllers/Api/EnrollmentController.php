@@ -201,7 +201,7 @@ class EnrollmentController extends Controller
         if (!$enrollment) {
             return $this->error(
                 'Anda belum mendaftar ke track ini.',
-                403
+                404
             );
         }
 
@@ -243,14 +243,7 @@ class EnrollmentController extends Controller
         if (!$enrollment) {
             return $this->error(
                 'Anda belum mendaftar ke track ini.',
-                403
-            );
-        }
-
-        if ($enrollment->status !== 'active') {
-            return $this->error(
-                'Enrollment Anda tidak aktif.',
-                403
+                404
             );
         }
 

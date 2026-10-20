@@ -64,7 +64,7 @@ class TrackOverviewTest extends TestCase
         $response = $this->actingAs($this->user)
             ->getJson("/api/my/tracks/{$this->track->slug}/overview");
 
-        $response->assertStatus(403)
+        $response->assertStatus(404)
             ->assertJson([
                 'success' => false,
             ]);
@@ -82,7 +82,24 @@ class TrackOverviewTest extends TestCase
         $response = $this->actingAs($this->user)
             ->getJson("/api/my/tracks/{$this->track->slug}/overview");
 
-        $response->assertStatus(403);
+        $response->assertStatus(404);
+    }
+
+    /** @test */
+    public function it_returns_overview_for_completed_enrollment()
+    {
+        TrackEnrollment::factory()->create([
+            'profile_id' => $this->profile->id,
+            'track_id' => $this->track->id,
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/my/tracks/{$this->track->slug}/overview");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.enrollment.status', 'completed');
     }
 
     /** @test */

@@ -87,7 +87,7 @@ class EnrollmentService
     {
         return TrackEnrollment::where('profile_id', $profile->id)
             ->where('track_id', $track->id)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'completed'])
             ->first();
     }
 }

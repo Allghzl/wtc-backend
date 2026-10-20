@@ -213,15 +213,16 @@ class EnrollmentTest extends TestCase
     }
 
     /** @test */
-    public function test_my_tracks_returns_404_if_no_enrollments(): void
+    public function test_my_tracks_returns_empty_list_if_no_enrollments(): void
     {
         $response = $this->actingAs($this->user)
             ->getJson('/api/my/tracks');
 
-        $response->assertStatus(404)
+        $response->assertStatus(200)
             ->assertJson([
-                'success' => false,
+                'success' => true,
                 'message' => 'Anda belum mendaftar ke track manapun.',
+                'data' => [],
             ]);
     }
 
@@ -249,6 +250,24 @@ class EnrollmentTest extends TestCase
                     'enrolled_at',
                 ],
             ]);
+    }
+
+    /** @test */
+    public function test_get_enrollment_returns_completed_enrollment(): void
+    {
+        TrackEnrollment::create([
+            'track_id' => $this->track->id,
+            'profile_id' => $this->profile->id,
+            'status' => 'completed',
+            'enrolled_at' => now()->subDays(30),
+            'completed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson("/api/tracks/{$this->track->slug}/enrollment");
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.status', 'completed');
     }
 
     /** @test */
