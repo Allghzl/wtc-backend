@@ -35,6 +35,11 @@ class StudyClassController extends Controller
             $query->with(['tracks' => fn ($q) => $q->where('is_active', true)->orderBy('order')]);
         }
 
+        // Include student count if requested
+        if ($request->boolean('with_students')) {
+            $query->withCount(['profiles as students_count']);
+        }
+
         $pagination = $request->input('pagination', true);
 
         if ($pagination === false || $pagination === 'false' || $pagination === 0) {

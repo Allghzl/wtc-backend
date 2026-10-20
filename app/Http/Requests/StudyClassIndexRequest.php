@@ -31,6 +31,7 @@ class StudyClassIndexRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'active_only' => ['nullable', 'in:true,false,1,0'],
             'with_tracks' => ['nullable', 'in:true,false,1,0'],
+            'with_students' => ['nullable', 'in:true,false,1,0'],
         ];
     }
 }

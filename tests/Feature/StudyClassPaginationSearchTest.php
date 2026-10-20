@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Profile;
 use App\Models\StudyClass;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -192,5 +193,44 @@ class StudyClassPaginationSearchTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['page']);
+    }
+
+    /** @test */
+    public function test_with_students_returns_profile_count(): void
+    {
+        $studyClass = StudyClass::factory()->create();
+        $otherClass = StudyClass::factory()->create();
+
+        $profile = fn (?int $studyClassId) => Profile::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'study_class_id' => $studyClassId,
+        ]);
+
+        $profile($studyClass->id);
+        $profile($studyClass->id);
+        $profile($studyClass->id);
+        $profile($otherClass->id);
+        $profile(null);
+
+        $response = $this->actingAs($this->user)
+            ->getJson('/api/study-classes?with_students=true&pagination=false');
+
+        $response->assertStatus(200);
+
+        $byId = collect($response->json('data'))->keyBy('id');
+        $this->assertSame(3, $byId[$studyClass->id]['students_count']);
+        $this->assertSame(1, $byId[$otherClass->id]['students_count']);
+    }
+
+    /** @test */
+    public function test_students_count_is_absent_without_the_flag(): void
+    {
+        StudyClass::factory()->create();
+
+        $response = $this->actingAs($this->user)
+            ->getJson('/api/study-classes?pagination=false');
+
+        $response->assertStatus(200);
+        $this->assertArrayNotHasKey('students_count', $response->json('data.0'));
     }
 }
