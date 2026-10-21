@@ -31,7 +31,7 @@ class ModuleUpdateRequest extends FormRequest
             'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('modules', 'slug')->ignore($this->module)],
             'description' => ['nullable', 'sometimes', 'string'],
             'metadata' => ['nullable', 'sometimes', 'array'],
-            'order' => ['sometimes', 'nullable', 'integer', Rule::unique('modules', 'order')->withoutTrashed(false)->ignore($this->module)],
+            'order' => ['sometimes', 'nullable', 'integer', Rule::unique('modules', 'order')->ignore($this->module)],
         ];
     }
 }

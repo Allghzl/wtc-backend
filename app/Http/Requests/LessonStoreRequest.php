@@ -36,7 +36,6 @@ class LessonStoreRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::unique('lessons')
-                    ->withoutTrashed(false)
                     ->where(fn($query) => $query->where('module_id', $this->module_id)),
             ],
             'module_id' => ['required', 'exists:modules,id']

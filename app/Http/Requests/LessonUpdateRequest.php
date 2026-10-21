@@ -37,7 +37,6 @@ class LessonUpdateRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::unique('lessons')
-                    ->withoutTrashed(false)
                     ->where(fn($query) => $query->where('module_id', $this->module_id ?? $this->route('lesson')->module_id))
                     ->ignore($this->route('lesson')),
             ],

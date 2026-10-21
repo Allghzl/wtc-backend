@@ -35,7 +35,7 @@ class ModuleStoreRequest extends FormRequest
             'order' => [
                 'nullable',
                 'integer',
-                Rule::unique('modules')->withoutTrashed(false)->where(function ($query) {
+                Rule::unique('modules')->where(function ($query) {
                     return $query->where('track_id', $this->track_id);
                 }),
             ],
