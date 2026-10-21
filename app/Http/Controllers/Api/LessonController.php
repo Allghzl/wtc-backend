@@ -20,7 +20,9 @@ class LessonController extends Controller
      */
     public function index(LessonIndexRequest $request)
     {
-        $query = Lesson::with(['attachments', 'creator.roles', 'creator.user']);
+        // `module` carries the slug the lesson-detail routes need, so the list
+        // rows can link into /:moduleSlug/lessons/:lessonSlug.
+        $query = Lesson::with(['module', 'attachments', 'creator.roles', 'creator.user']);
 
         // Filter by module_id if provided
         $query->when($request->input('module_id'), function ($q, $moduleId) {
